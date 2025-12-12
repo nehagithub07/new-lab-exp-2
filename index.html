@@ -4,42 +4,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Lab Control Panel</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="meter-panel">
-       <div class="meters">
-            <img style="height: 12em; width: 12em;" class="am1" src="images/ammeter.png" alt="ammeter">
-            <img style="height: 11em; width: 11em;" class="vm1" src="images/voltmeter.png" alt="voltmeter">
-           <img style="height: 12em; width: 12em;" class="am2" src="images/ammeter.png" alt="ammeter">
-          
-           <img style="height: 11em; width: 11em;" class="vm2" src="images/voltmeter.png" alt="voltmeter">
-           <img src="images/needle.png" alt="">
-       </div>
-    </div>
-   <div>
-     <img src="images/Generator-Rotor.png" alt="">
-   </div>
-   <div class="mcb">
-     <img src="images/mcb-off.png" alt="">
-   </div>
-   <div>
-     <img src="images/mcb-on.png" alt="">
-   </div>
-  
-    <div class="starter">
-        <div>
-           <img style="height: 15em; width: 13em;" class="starter-body" src="images/starter.png" alt="">
-           <img class="starter-handle" style="height: 30px; width: 30px;" src="images/starter-handle.png" alt="">
-        </div>
-    </div>
-    <div>
-        <img src="images/Rotor-body.png" alt="">
-    </div>
-   <div>
-     <img src="images/shaft.png" alt="">
-   </div>
-     
+    <main class="panel">
+        <section class="top-row">
+            <aside class="left-column">
+                <div class="mcb-section">
+                    <div class="mcb-block">
+                        <img class="mcb-toggle" src="images/mcb-off.png" alt="MCB">
+                        <div class="led-row">
+                            <span class="led red"></span>
+                            <span class="led red"></span>
+                            <span class="led red"></span>
+                        </div>
+                    </div>
+                    <div class="starter-block">
+                        <img class="starter-body" src="images/starter.png" alt="Starter body">
+                        <img class="starter-handle" src="images/starter-handle.png" alt="Starter handle">
+                    </div>
+                </div>
+
+                <div class="lamp-board">
+                    <div class="lamp-grid">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                        <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
+                    </div>
+                    <div class="jack-row">
+                        <span class="jack"></span>
+                        <span class="jack"></span>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="center-column">
+                <div class="meter-panel">
+                    <div class="meters">
+                        <div class="meter-card">
+                            <img src="images/ammeter.png" alt="Ammeter">
+                        </div>
+                        <div class="meter-card">
+                            <img src="images/ammeter.png" alt="Ammeter">
+                        </div>
+                        <div class="meter-card">
+                            <img src="images/voltmeter.png" alt="Voltmeter">
+                        </div>
+                        <div class="meter-card">
+                            <img src="images/voltmeter.png" alt="Voltmeter">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workspace">
+                    <div class="equipment-row">
+                        <div class="assembly">
+                            <div class="motor-box">
+                                <img src="images/shuntmotor.png" alt="Motor">
+                                <div class="connector-strip top">
+                                    <div class="connector"><span class="dot"></span><span class="label">A1</span></div>
+                                    <div class="connector"><span class="dot"></span><span class="label">Z1</span></div>
+                                </div>
+                                <div class="connector-strip bottom">
+                                    <div class="connector"><span class="dot"></span><span class="label">A2</span></div>
+                                    <div class="connector"><span class="dot"></span><span class="label">Z2</span></div>
+                                </div>
+                            </div>
+                            <div class="coupler">
+                                <img src="images/shaft.png" alt="Coupling shaft">
+                            </div>
+                            <div class="generator-box">
+                                <img class="generator-body" src="images/Rotor-body.png" alt="Rotor body">
+                                <img class="generator-rotor" id="gr" src="images/Generator-Rotor.png" alt="Generator rotor">
+                                <div class="connector-strip top">
+                                    <div class="connector"><span class="dot"></span><span class="label">A3</span></div>
+                                    <div class="connector"><span class="dot"></span><span class="label">Z3</span></div>
+                                </div>
+                                <div class="connector-strip bottom">
+                                    <div class="connector"><span class="dot"></span><span class="label">A4</span></div>
+                                    <div class="connector"><span class="dot"></span><span class="label">Z4</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div class="data-table">
+                            <div class="table-header">
+                                <span>Sr No.</span><span>Current (A)</span><span>Voltage (V)</span>
+                            </div>
+                            <div class="table-row"><span></span><span></span><span></span></div>
+                            <div class="table-row"><span></span><span></span><span></span></div>
+                            <div class="table-row"><span></span><span></span><span></span></div>
+                            <div class="table-row"><span></span><span></span><span></span></div>
+                            <div class="table-row"><span></span><span></span><span></span></div>
+                        </div> -->
+                    </div>
+                    
+                </div>
+                 <section class="data-section">
+            <div class="data-table">
+                <div class="table-header">
+                    <span>Sr No.</span><span>Current (A)</span><span>Voltage (V)</span>
+                </div>
+                <div class="table-row"><span></span><span></span><span></span></div>
+                <div class="table-row"><span></span><span></span><span></span></div>
+                <div class="table-row"><span></span><span></span><span></span></div>
+                <div class="table-row"><span></span><span></span><span></span></div>
+                <div class="table-row"><span></span><span></span><span></span></div>
+            </div>
+        </section>
+            </section>
+
+            <aside class="right-column">
+                <div class="pill-stack">
+                    <button class="pill-btn">Instructions</button>
+                    <button class="pill-btn">Check Connections</button>
+                    <button class="pill-btn">Speaking</button>
+                    <button class="pill-btn">Auto Connect</button>
+                    <button class="pill-btn">Add Table</button>
+                    <button class="pill-btn">Reset</button>
+                    <button class="pill-btn">Print</button>
+                    <button class="pill-btn">Report</button>
+                    <button class="pill-btn">Graph</button>
+                </div>
+            </aside>
+        </section>
+
+        <section class="graph-section">
+            <div class="graph-header">
+                <h3>Output Graph</h3>
+                <span class="graph-caption">Auto-generated from readings</span>
+            </div>
+            <div class="graph-canvas">
+                <div class="graph-bars" id="graphBars"></div>
+            </div>
+        </section>
+
+       
+
+        <!-- <footer class="bottom-row">
+            <span class="pill wide"></span>
+            <div class="mascot">
+                <div class="visor"></div>
+                <div class="body"></div>
+            </div>
+        </footer> -->
+    </main>
+    <script src="script.js"></script>
 </body>
 </html>
