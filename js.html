@@ -1,3 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>jsPlumb Custom Ring Endpoint</title>
+  <script src="https://unpkg.com/jsplumb/dist/js/jsplumb.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    .point {
+      width: 40px;
+      height: 40px;
+      background: #3498db;
+      border-radius: 50%;
+      position: absolute;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 20;
+    }
+
+    #point1 { top: 60px;  left: 90px; }
+    #point2 { top: 140px; left: 90px; }
+    #point3 { top: 220px; left: 90px; }
+
+    #point4 { top: 60px;  left: 360px; }
+    #point5 { top: 140px; left: 360px; }
+    #point6 { top: 220px; left: 360px; }
+
+    .my-btn {
+      padding: 10px 26px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .jtk-connector { z-index: 4; }
+    .jtk-endpoint  { z-index: 6; }
+  </style>
+</head>
+<body>
+
+<button class="my-btn" id="checkBtn">Check</button>
+
+
+<script>
 jsPlumb.ready(function () {
 
   jsPlumb.setContainer("container");
@@ -7,7 +64,7 @@ jsPlumb.ready(function () {
     encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26">
         <circle cx="13" cy="13" r="12" fill="black"/>
-        <circle cx="13" cy="13" r="9" fill="#C38055"/>
+        <circle cx="13" cy="13" r="9" fill="white"/>
         <circle cx="13" cy="13" r="6" fill="black"/>   
       </svg>
     `);
@@ -17,18 +74,22 @@ jsPlumb.ready(function () {
     isSource: true,
     isTarget: true,
     maxConnections: -1,
-    connector: ["Bezier", { curviness: 10 }],
+    connector: ["Bezier", { curviness: 90 }],
     connectorStyle: { stroke: "#000", strokeWidth: 2 }
   };
+
   function addEndpoint(el, anchor) {
     jsPlumb.addEndpoint(el, { anchor }, endpointOptions);
   }
+
   addEndpoint("point1", [1.35, 0.5, 1, 0]);
   addEndpoint("point2", [1.35, 0.5, 1, 0]);
  
+ 
   const correctPairs = {
-    point1: "point2",
-    point2: "point1",
+    point1: "point5",
+    point2: "point6",
+    point3: "point4"
   };
 
   document.querySelectorAll(".point").forEach(p => {
@@ -68,3 +129,7 @@ jsPlumb.ready(function () {
   });
 
 });
+</script>
+
+</body>
+</html>
