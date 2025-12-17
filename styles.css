@@ -1,12 +1,24 @@
 /* =========================
    GLOBAL RESET
 ========================= */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-*::before, *::after { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-img { max-width: 100%; height: auto; display: block; }
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-:root{
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+:root {
   --bg: #d7d0c4;
   --ink: #111;
   --wood-border: #8c6a48;
@@ -17,9 +29,12 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 /* Make viewport sizing stable (especially on zoom) */
-html, body { height: 100%; }
+html,
+body {
+  height: 100%;
+}
 
-body{
+body {
   min-height: 100dvh;
   background: var(--bg);
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
@@ -35,13 +50,13 @@ body{
 }
 
 /* MAIN WINDOW (the border you want fixed + always inside viewport) */
-.panel{
+.panel {
   /* Always fit inside viewport minus gutters */
   width: min(var(--panel-max), calc(100vw - (var(--gutter) + var(--gutter))));
   max-width: 100%;
 
   /* Keep the whole window visible and scroll INSIDE it - only Y by default */
-  max-height: calc(100dvh - (var(--gutter) + var(--gutter)));
+  max-height: calc(190dvh - (var(--gutter) + var(--gutter)));
   overflow-y: auto;
   overflow-x: hidden;
 
@@ -49,7 +64,8 @@ body{
   background: var(--bg);
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.5vw, 16px); /* Reduced gap for better vertical fit */
+  gap: clamp(8px, 1.5vw, 16px);
+  /* Reduced gap for better vertical fit */
 
   /* Optional but makes it look like a real window */
   border-radius: 8px;
@@ -61,16 +77,18 @@ body{
   display: grid;
   grid-template-columns: 1fr 2.6fr 1.2fr;
   gap: clamp(8px, 2vw, 16px);
-  border-bottom: 3px solid var(--ink);
+  border-bottom: 3px solid var(--ink);  
+  padding-bottom: clamp(70px, 1.5vw, 16px);
+  position: relative;
 }
 
 .left-column {
   padding: clamp(12px, 2vw, 18px);
   border-right: 3px solid var(--ink);
   width: 80%;
-  max-width: 100%;
+  max-width: 80%;
 }
- 
+
 .center-column,
 .right-column {
   padding: clamp(12px, 2vw, 18px);
@@ -80,16 +98,15 @@ body{
 }
 
 .center-column {
-    border-right: 3px solid var(--ink);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(19px, 2.5vw, 0px);
-    position: relative;
-    width: 100%;
-    margin: 0px -90px;
+  border-right: 3px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(19px, 2.5vw, 0px);
+  position: relative;
+  width: 100%;
+  margin: 0px -90px;
 }
-
-.right-column{
+.right-column {
   border-right: none;
   display: flex;
   justify-content: center;
@@ -101,7 +118,8 @@ body{
   width: 100%;
 
   position: sticky;
-  top: 0; /* Adjusted to stick flush to top of panel */
+  top: 0;
+  /* Adjusted to stick flush to top of panel */
   align-self: start;
 }
 
@@ -134,7 +152,7 @@ h3 {
   aspect-ratio: 4 / 3;
   overflow: hidden;
   margin: 0 auto clamp(10px, 2vw, 18px);
-  height: 35%;
+  height: 45%;
   right: 10px;
 }
 
@@ -157,7 +175,11 @@ h3 {
   right: -2.25%;
 }
 
-.starter-body { display: block; width: 111.11%; height: 235px; }
+.starter-body {
+  display: block;
+  width: 111.11%;
+  height: 235px;
+}
 
 .starter-handle {
   position: absolute;
@@ -167,7 +189,10 @@ h3 {
   left: 16.67%;
 }
 
-.led-row { display: flex; gap: clamp(6px, 1vw, 10px); }
+.led-row {
+  display: flex;
+  gap: clamp(6px, 1vw, 10px);
+}
 
 .led {
   width: clamp(14px, 2vw, 20px);
@@ -187,7 +212,7 @@ h3 {
   max-width: 260px;
   height: 300px;
   left: -5px;
-  top: 8px;
+ 
   /* Removed fixed height: let aspect-ratio control for responsiveness */
   aspect-ratio: 4 / 3;
   padding: clamp(12px, 1.8vw, 18px);
@@ -224,55 +249,29 @@ h3 {
   border-radius: 12px;
 }
 
-.lamp-grid .lamp-bulb:nth-child(9) { grid-column: 2; }
-.lamp-grid .lamp-bulb:nth-child(10) { grid-column: 3; }
+.lamp-grid .lamp-bulb:nth-child(9) {
+  grid-column: 2;
+}
 
-/* Themed A/B buttons on MCB */
-.point-1, .point-2{
-  position: absolute;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 2px solid rgba(17,17,17,0.45);
-  background: linear-gradient(145deg, #fdf5e6, #e5d5bc 55%, #cdb89d);
-  box-shadow: inset 0 2px 6px rgba(255,255,255,0.6),
-              inset 0 -3px 8px rgba(0,0,0,0.12),
-              0 8px 16px rgba(0,0,0,0.18);
-  color: #2f241a;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+.lamp-grid .lamp-bulb:nth-child(10) {
+  grid-column: 3;
 }
-.point-1:hover, .point-2:hover{
-  transform: translateY(-2px);
-  box-shadow: inset 0 2px 6px rgba(255,255,255,0.7),
-              inset 0 -3px 8px rgba(0,0,0,0.14),
-              0 12px 18px rgba(0,0,0,0.22);
-  filter: saturate(1.04);
-}
-.point-1:active, .point-2:active{
-  transform: translateY(0);
-  box-shadow: inset 0 2px 6px rgba(255,255,255,0.55),
-              inset 0 -3px 8px rgba(0,0,0,0.12),
-              0 6px 12px rgba(0,0,0,0.18);
-}
-.point-1 { top: 10px; left: 8px; }
-.point-2 { top: 10px; left: 60px; }
+
+
 
 /* Dropdown styling to match the warm, tactile theme */
-.lampboard-dropdown{
+.lampboard-dropdown {
   width: 100%;
-  max-width: 260px;
-  margin: 8px auto 16px;
-  padding: 6px;
+  max-width: 300px;
+  margin: 0px 0px 1px -11px;
+  padding: 2px;
   background: linear-gradient(180deg, #f6eedc, #e8dcc6);
-  border: 2px solid rgba(17,17,17,0.25);
+  border: 2px solid rgba(17, 17, 17, 0.25);
   border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.7);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-.lampboard-dropdown select{
+.lampboard-dropdown select {
   width: 100%;
   appearance: none;
   -webkit-appearance: none;
@@ -285,8 +284,8 @@ h3 {
   border: 2px solid rgba(40, 32, 24, 0.35);
   border-radius: 8px;
   box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.6),
-              inset 0 -3px 8px rgba(0,0,0,0.08),
-              0 6px 14px rgba(0,0,0,0.15);
+    inset 0 -3px 8px rgba(0, 0, 0, 0.08),
+    0 6px 14px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
   background-image:
@@ -299,30 +298,31 @@ h3 {
   background-repeat: no-repeat;
 }
 
-.lampboard-dropdown select:hover{
+.lampboard-dropdown select:hover {
   transform: translateY(-1px);
   box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.7),
-              inset 0 -3px 8px rgba(0,0,0,0.1),
-              0 10px 18px rgba(0,0,0,0.18);
+    inset 0 -3px 8px rgba(0, 0, 0, 0.1),
+    0 10px 18px rgba(0, 0, 0, 0.18);
   filter: saturate(1.03);
 }
 
-.lampboard-dropdown select:focus{
+.lampboard-dropdown select:focus {
   outline: 2px solid #b08452;
- 
+
 }
 
- 
-.meter-area{
+
+.meter-area {
   position: relative;
   width: min(900px, 100%);
-  margin: 0 auto;   
+  margin: 0 auto;
 }
 
 .meter-panel {
   width: 100%;
   aspect-ratio: 900 / 230;
-  min-height: clamp(200px, 25vw, 250px); /* Reduced min-height for better vertical fit */
+  min-height: clamp(250px, 25vw, 250px);
+  /* Reduced min-height for better vertical fit */
   height: auto;
   background-image: url(images/wooden-texture.jpg);
   background-size: cover;
@@ -331,14 +331,16 @@ h3 {
   border-radius: 6px;
   padding: clamp(10px, 1vw, 14px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  overflow: visible; /* IMPORTANT: don’t clip needles/labels */
+  overflow: visible;
+  /* IMPORTANT: don’t clip needles/labels */
   margin: 0 auto;
 }
 
 .meters {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr)); /* Reduced min for better horizontal fit */
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  /* Reduced min for better horizontal fit */
   grid-template-rows: auto auto;
   column-gap: clamp(12px, 1.6vw, 18px);
   row-gap: clamp(12px, 2vw, 18px);
@@ -347,7 +349,8 @@ h3 {
   align-items: start;
   justify-items: center;
   padding-inline: clamp(4px, 1vw, 10px);
-  overflow-x: hidden; /* Ensure no X overflow */
+  overflow-x: hidden;
+  /* Ensure no X overflow */
 }
 
 .meter-card {
@@ -355,7 +358,8 @@ h3 {
   grid-row: 1;
   width: 100%;
   max-width: 240px;
-  min-width: 140px; /* Reduced */
+  min-width: 140px;
+  /* Reduced */
   height: auto;
   aspect-ratio: 5 / 4;
   padding: clamp(4px, 0.8vw, 8px);
@@ -388,11 +392,22 @@ h3 {
   background: url(images/screw.png) center/contain no-repeat;
   opacity: 0.8;
 }
-.meter-card::before { top: 0; left: 0; }
-.meter-card::after  { bottom: 0; right: 0; }
+
+.meter-card::before {
+  top: 0;
+  left: 0;
+}
+
+.meter-card::after {
+  bottom: 0;
+  right: 0;
+}
 
 /* ---- NEEDLES (responsive + consistent) ---- */
-.meter-needle1, .meter-needle2, .meter-needle3, .meter-needle4 {
+.meter-needle1,
+.meter-needle2,
+.meter-needle3,
+.meter-needle4 {
   position: absolute;
   width: clamp(22px, 2.5vw, 38px);
   height: auto;
@@ -403,39 +418,64 @@ h3 {
   pointer-events: none;
   z-index: 5;
 }
+
 /* small tweak for 3/4 if needed */
-.meter-needle3, .meter-needle4 { top: 56%; }
+.meter-needle3,
+.meter-needle4 {
+  top: 56%;
+}
 
 /* ---- LABELS (always below meters, never cut) ---- */
-#ammter1-label, #ammter2-label, #voltmeter1-label, #voltmeter2-label {
-  position: static;
+#ammter1-label,
+#ammter2-label,
+#voltmeter1-label,
+#voltmeter2-label {
+  margin-top: 40px;
+  position: absolute;
+  top: -40px;
+  left: 10px;
   grid-row: 2;
   letter-spacing: 0.08em;
-  font-size: clamp(0.6rem, 0.95vw, 0.8rem);
+  font-size: clamp(0.88rem, 0.5vw, 0.89rem);
   color: #3b2f24;
   font-weight: 700;
   white-space: nowrap;
+  width: 150px;
   padding: 4px 12px;
   background: linear-gradient(135deg, #fff7e2, #e3cfa5);
-  box-shadow: 0 3px 0 #b18c58, 0 6px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8);
-  text-shadow: 0 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.25);
+  box-shadow: 0 3px 0 #b18c58, 0 6px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 0 #fff, 0 2px 4px rgba(0, 0, 0, 0.25);
   border-radius: 4px;
   text-align: center;
+
 }
 
-#ammter1-label    { grid-column: 1; }
-#ammter2-label    { grid-column: 2; }
-#voltmeter1-label { grid-column: 3; }
-#voltmeter2-label { grid-column: 4; }
+#ammter1-label {
+  grid-column: 1;
+}
+
+#ammter2-label {
+  grid-column: 2;
+}
+
+#voltmeter1-label {
+  grid-column: 3;
+}
+
+#voltmeter2-label {
+  grid-column: 4;
+}
 
 /* On very small widths, further reduce to prevent squeeze/overflow */
-@media (max-width: 720px){
-  .meters{
-    grid-template-columns: repeat(4, minmax(110px, 1fr)); /* Further reduced */
+@media (max-width: 720px) {
+  .meters {
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+    /* Further reduced */
     padding: 0 clamp(10px, 2vw, 16px);
     overflow-x: hidden;
   }
-  .meter-card{
+
+  .meter-card {
     min-width: 110px;
     aspect-ratio: 5 / 4;
   }
@@ -445,46 +485,75 @@ h3 {
 @media (max-width: 600px) {
   .meters {
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(4, auto); /* 2 rows of meters + 2 rows of labels */
+    grid-template-rows: repeat(4, auto);
+    /* 2 rows of meters + 2 rows of labels */
   }
-  #ammter1-label { grid-column: 1; grid-row: 3; }
-  #ammter2-label { grid-column: 2; grid-row: 3; }
-  #voltmeter1-label { grid-column: 1; grid-row: 4; }
-  #voltmeter2-label { grid-column: 2; grid-row: 4; }
-  .meter-card:nth-child(3) { grid-row: 2; }
-  .meter-card:nth-child(4) { grid-row: 2; }
+
+  #ammter1-label {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  #ammter2-label {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  #voltmeter1-label {
+    grid-column: 1;
+    grid-row: 4;
+  }
+
+  #voltmeter2-label {
+    grid-column: 2;
+    grid-row: 4;
+  }
+
+  .meter-card:nth-child(3) {
+    grid-row: 2;
+  }
+
+  .meter-card:nth-child(4) {
+    grid-row: 2;
+  }
 }
 
 /* =========================
    WORKSPACE
 ========================= */
 .workspace {
-  background: var(--bg);
+  position: absolute;
+  top: 291px;
+  left:21px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
   border: 3px solid var(--ink);
-  padding: clamp(10px, 1.5vw, 16px); /* Slightly reduced padding */
+  gap: clamp(18px, 2.5vw, 28px);
+  padding: clamp(12px, 2vw, 18px);
 }
 
 .equipment-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   flex-direction: column;
-  gap: clamp(12px, 2vw, 20px); /* Reduced gap */
+  gap: clamp(12px, 2vw, 20px);
+  /* Reduced gap */
 }
 
 .assembly {
-  
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(2px, 0.5vw, 6px); /* Reduced gap for coupler */
-  /* Adjusted min-width for better horizontal fit */
+  gap: clamp(2px, 0.5vw, 6px);
   min-width: clamp(320px, 45vw, 500px);
 }
 
-.motor-box, .generator-box {
-  /* Slightly reduced sizes */
-  width: clamp(160px, 22vw, 220px);
+.motor-box,
+.generator-box {
+  width: 50%;
   aspect-ratio: 1;
   border: 3px solid var(--ink);
   background: linear-gradient(180deg, #b7b2a6, #c5bfb2);
@@ -493,12 +562,18 @@ h3 {
   justify-content: center;
   padding: clamp(12px, 2vw, 18px);
   position: relative;
+  height: 200px;
+}
+
+.motor-box img {
+  width: 100%;
   height: 100%;
 }
 
-.motor-box img { width: 100%; height: 100%; }
-
-.generator-body { width: 100%; height: 120%; }
+.generator-body {
+  width: 100%;
+  height: 120%;
+}
 
 .generator-rotor {
   position: absolute;
@@ -515,28 +590,16 @@ h3 {
   flex-shrink: 0;
   margin: 0 clamp(-19px, -1.5vw, -6px);
 }
-.coupler img { width: 100%; height: auto; }
 
-.connector-strip {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: clamp(14px, 3vw, 22px);
-  align-items: center;
+.coupler img {
+  width: 100%;
+  height: auto;
 }
 
-.connector-strip.top { top: -18px; }
-.connector-strip.bottom { bottom: -18px; }
+ 
+ 
 
-.connector {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.littledot {
+/* .littledot {
   width: clamp(12px, 2vw, 18px);
   height: clamp(12px, 2vw, 18px);
   border-radius: 50%;
@@ -545,27 +608,32 @@ h3 {
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
   display: inline-block;
   cursor: pointer;
-}
-
+} */
+/* 
 .connector .label {
   font-size: 0.9rem;
   font-weight: 600;
   color: #1b2a78;
   letter-spacing: 0.02em;
-}
+} */
 
 /* =========================
    TABLE
 ========================= */
 .data-table {
-  width: 100%;
+  position: absolute;
+  top: 320px;
+  right: 20px;
+  width: 35%;
+  min-width: 240px;
   border: 3px solid var(--ink);
   background: #e5dfd3;
   display: grid;
   grid-template-rows: auto repeat(5, 1fr);
 }
 
-.table-header, .table-row {
+.table-header,
+.table-row {
   display: grid;
   grid-template-columns: 1fr 1.2fr 1.2fr;
   border-bottom: 2px solid var(--ink);
@@ -577,12 +645,24 @@ h3 {
   font-size: 0.9rem;
   font-weight: 600;
 }
-.table-header span:last-child { border-right: none; }
 
-.table-row { min-height: 38px; align-items: stretch; }
-.table-row span { border-right: 2px solid var(--ink); }
-.table-row span:last-child { border-right: none; }
- 
+.table-header span:last-child {
+  border-right: none;
+}
+
+.table-row {
+  min-height: 35px;
+  align-items: stretch;
+}
+
+.table-row span {
+  border-right: 2px solid var(--ink);
+}
+
+.table-row span:last-child {
+  border-right: none;
+}
+
 .right-column .pill-stack {
   position: relative;
   right: 50px;
@@ -598,7 +678,7 @@ h3 {
   background: linear-gradient(180deg, #f9f3e5, #e8dcc6);
   border: 2px solid rgba(17, 17, 17, 0.2);
   border-radius: 10px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   max-height: calc(100vh - 40px);
   overflow-y: auto;
   overflow-x: hidden;
@@ -613,14 +693,15 @@ h3 {
   gap: 6px;
   width: 100%;
   max-width: 200px;
-  min-width: 170px;          /* IMPORTANT: remove overflow */
+  min-width: 170px;
+  /* IMPORTANT: remove overflow */
   height: 44px;
   background: linear-gradient(135deg, #f7efde, #e2d5c2 50%, #cdb9a0);
   border-radius: 999px;
   border: 2px solid rgba(40, 32, 24, 0.35);
   box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.6),
-              inset 0 -4px 10px rgba(0, 0, 0, 0.08),
-              0 8px 18px rgba(0, 0, 0, 0.18);
+    inset 0 -4px 10px rgba(0, 0, 0, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.18);
 
   overflow: hidden;
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
@@ -653,16 +734,16 @@ h3 {
 .pill-btn:hover {
   transform: translateY(-2px);
   box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.6),
-              inset 0 -4px 10px rgba(0, 0, 0, 0.1),
-              0 12px 20px rgba(0, 0, 0, 0.22);
+    inset 0 -4px 10px rgba(0, 0, 0, 0.1),
+    0 12px 20px rgba(0, 0, 0, 0.22);
   filter: saturate(1.02);
 }
 
 .pill-btn:active {
   transform: translateY(0);
   box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.45),
-              inset 0 -3px 8px rgba(0, 0, 0, 0.16),
-              0 6px 12px rgba(0, 0, 0, 0.18);
+    inset 0 -3px 8px rgba(0, 0, 0, 0.16),
+    0 6px 12px rgba(0, 0, 0, 0.18);
 }
 
 /* =========================
@@ -683,8 +764,15 @@ h3 {
   margin-bottom: clamp(10px, 1.5vw, 16px);
 }
 
-.graph-header h3 { font-size: clamp(1rem, 1.8vw, 1.3rem); color: #222; }
-.graph-caption { font-size: clamp(0.85rem, 1.4vw, 1rem); color: #444; }
+.graph-header h3 {
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  color: #222;
+}
+
+.graph-caption {
+  font-size: clamp(0.85rem, 1.4vw, 1rem);
+  color: #444;
+}
 
 .graph-canvas {
   position: relative;
@@ -698,14 +786,27 @@ h3 {
   overflow: hidden;
 }
 
-.graph-canvas::before, .graph-canvas::after {
+.graph-canvas::before,
+.graph-canvas::after {
   content: "";
   position: absolute;
   background: var(--ink);
   opacity: 0.8;
 }
-.graph-canvas::before { left: 42px; top: 0; width: 2px; height: 100%; }
-.graph-canvas::after  { left: 0; bottom: 36px; height: 2px; width: 100%; }
+
+.graph-canvas::before {
+  left: 42px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+}
+
+.graph-canvas::after {
+  left: 0;
+  bottom: 36px;
+  height: 2px;
+  width: 100%;
+}
 
 .graph-bars {
   position: absolute;
@@ -725,7 +826,11 @@ h3 {
   min-width: 70px;
 }
 
-.bar-wrap { display: flex; align-items: flex-end; gap: 8px; }
+.bar-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
 
 .graph-bar {
   width: clamp(20px, 4vw, 28px);
@@ -734,10 +839,21 @@ h3 {
   box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.35), 0 4px 8px rgba(0, 0, 0, 0.18);
 }
 
-.graph-bar.current { background: linear-gradient(180deg, #7ec3ff, #1b6fb8); border: 2px solid #0e3b64; }
-.graph-bar.voltage { background: linear-gradient(180deg, #ffc36c, #ff7d36); border: 2px solid #b35518; }
+.graph-bar.current {
+  background: linear-gradient(180deg, #7ec3ff, #1b6fb8);
+  border: 2px solid #0e3b64;
+}
 
-.bar-label { font-size: 0.9rem; color: #1f1f1f; letter-spacing: 0.02em; }
+.graph-bar.voltage {
+  background: linear-gradient(180deg, #ffc36c, #ff7d36);
+  border: 2px solid #b35518;
+}
+
+.bar-label {
+  font-size: 0.9rem;
+  color: #1f1f1f;
+  letter-spacing: 0.02em;
+}
 
 /* =========================
    SLOT FIX (NO DRIFT)
@@ -750,22 +866,73 @@ h3 {
   z-index: 10;
 }
 
-.mcb-starter-section .slot { width: 10%; }
-.meter-area .slot          { width: 3.6%; }
+.mcb-starter-section .slot {
+  width: 10%;
+}
 
-#s1 { left: 20%;  top: 72%; }
-#s2 { left: 36%;  top: 72%; }
-#s3 { left: 55%;  top: 72%; }
-#s4 { left: 73%;  top: 72%; }
+.meter-area .slot {
+  width: 3.6%;
+}
 
-#s5  { left: 7%;     top: 67.5%; }
-#s6  { left: 16%;  top: 67.5%; }
-#s7  { left: 31.5%;  top: 67.5%; }
-#s8  { left: 40.5%;  top: 67.5%; }
-#s9  { left: 55.5%;  top: 67.5%; }
-#s10 { left: 65.5%;  top: 67.5%; }
-#s11 { left: 80%;  top: 67.5%; }
-#s12 { left: 90%;  top: 67.5%; }
+#s1 {
+  left: 20%;
+  top: 72%;
+}
+
+#s2 {
+  left: 36%;
+  top: 72%;
+}
+
+#s3 {
+  left: 55%;
+  top: 72%;
+}
+
+#s4 {
+  left: 73%;
+  top: 72%;
+}
+
+#s5 {
+  left: 7%;
+  top: 67.5%;
+}
+
+#s6 {
+  left: 16%;
+  top: 67.5%;
+}
+
+#s7 {
+  left: 31.5%;
+  top: 67.5%;
+}
+
+#s8 {
+  left: 40.5%;
+  top: 67.5%;
+}
+
+#s9 {
+  left: 55.5%;
+  top: 67.5%;
+}
+
+#s10 {
+  left: 65.5%;
+  top: 67.5%;
+}
+
+#s11 {
+  left: 80%;
+  top: 67.5%;
+}
+
+#s12 {
+  left: 90%;
+  top: 67.5%;
+}
 
 /* =========================
    LEFT LABELS
@@ -773,7 +940,7 @@ h3 {
 .mcb-label {
   position: absolute;
   letter-spacing: 0.1em;
-  top: 135%;
+  top: 130%;
   left: 50%;
   transform: translateX(-50%);
   font-size: clamp(0.99rem, 0.95vw, 0.75rem);
@@ -782,23 +949,23 @@ h3 {
   white-space: nowrap;
   padding: 4px 10px;
   background: linear-gradient(135deg, #fff7e2, #e3cfa5);
-  box-shadow: 0 3px 0 #b18c58, 0 6px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8);
+  box-shadow: 0 3px 0 #b18c58, 0 6px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   border-radius: 4px;
 }
 
 .starter-label {
-  position: absolute;
-  top: 90%;
+ position: absolute;
+  letter-spacing: 0.1em;
+  top: 104.5%;
   left: 50%;
-  letter-spacing: 0.08em;
   transform: translateX(-50%);
-  font-size: clamp(0.55rem, 0.95vw, 0.75rem);
+  font-size: clamp(0.99rem, 0.95vw, 0.75rem);
   color: #3b2f24;
   font-weight: 700;
   white-space: nowrap;
   padding: 4px 10px;
   background: linear-gradient(135deg, #fff7e2, #e3cfa5);
-  box-shadow: 0 3px 0 #b18c58, 0 6px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8);
+  box-shadow: 0 3px 0 #b18c58, 0 6px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   border-radius: 4px;
 }
 
@@ -810,28 +977,29 @@ h3 {
   .panel {
     overflow-x: auto;
   }
-  
+
   /* Optional: Allow meter area to expand beyond 900px on very wide screens */
   .meter-area {
     width: 100%;
   }
-  
+
   .meters {
-    grid-template-columns: repeat(4, minmax(170px, 1fr)); /* Restore larger min-width for better spacing on wide screens */
+    grid-template-columns: repeat(4, minmax(170px, 1fr));
+    /* Restore larger min-width for better spacing on wide screens */
     overflow-x: visible;
   }
-  
+
   .meter-card {
     min-width: 170px;
   }
 }
 
-@media (max-width: 1100px){
-  .top-row{
+@media (max-width: 1100px) {
+  .top-row {
     grid-template-columns: 1fr 2fr;
   }
 
-  .right-column{
+  .right-column {
     grid-column: span 2;
     position: static;
     max-width: none;
@@ -839,7 +1007,7 @@ h3 {
     border-top: 3px solid var(--ink);
   }
 
-  .right-column .pill-stack{
+  .right-column .pill-stack {
     display: grid;
     grid-template-columns: repeat(2, minmax(160px, 1fr));
     justify-items: center;
@@ -848,57 +1016,29 @@ h3 {
     overflow: visible;
   }
 
-  .pill-btn{
+  .pill-btn {
     max-width: 260px;
     width: 100%;
   }
 }
 
 @media (max-width: 780px) {
-  .top-row { grid-template-columns: 1fr; }
-  .left-column, .center-column, .right-column {
+  .top-row {
+    grid-template-columns: 1fr;
+  }
+
+  .left-column,
+  .center-column,
+  .right-column {
     border: none;
     border-bottom: 3px solid var(--ink);
   }
-  .right-column { border-left: none; }
-  .equipment-row { justify-content: center; }
-}
 
- 
+  .right-column {
+    border-left: none;
+  }
 
-/* .point {
-
-  cursor: pointer;
-  font-weight: bold;
-  z-index: 10;
-   
-} */
-
-#point1 {  
-    position: absolute;
-    left: 45px;
-    top: 162px;
-}
-#point2 { 
-    position: absolute;
-    left: 80px;
-    top: 162px;
-}
-
-
-.point-1{
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    left: 33px;
-    top: 178px;
-    font-weight: bold;
-}
-.point-2 {
-    font-weight: bold;
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    left: 68px;
-    top: 178px;
+  .equipment-row {
+    justify-content: center;
+  }
 }

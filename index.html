@@ -7,10 +7,11 @@
     <script src="https://unpkg.com/jsplumb/dist/js/jsplumb.min.js"></script>
 
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles2.css">
 </head>
 
 <body>
-  <main class="panel">
+  <main class="panel" >
 
     <section class="top-row">
       <aside class="left-column">
@@ -18,22 +19,29 @@
           <div class="mcb-block">
             <img class="mcb-toggle" src="images/mcb-off.png" alt="MCB">
             <h3 class="mcb-label">MCB</h3>
-            <button class="point-1">A</button>
-            <button class="point-2">B</button>
-             <div id="point1" class="point"></div>
-             <div id="point2" class="point"></div>
+            <div>
+              
+                <button class="point-R">R</button>
+                <div id="pointR" class="point"></div>
+              
+             <button class="point-B">B</button>
+             
+             <div id="pointB" class="point"></div>
+            </div>
           </div>
           <div class="starter-block">
             <h3 class="starter-label">Starter</h3>
             <img class="starter-body" src="images/starter.png" alt="Starter body">
             <img class="starter-handle" src="images/starter-handle.png" alt="Starter handle">
+            <div>
+              <button class="point-L">L</button>
+             <button class="point-F">F</button>
+             <button class="point-A">A</button>
+             <div id="pointL" class="point"></div>
+             <div id="pointF" class="point"></div>
+             <div id="pointA" class="point"></div>
+            </div>
           </div>
-
-          <!-- LEFT PANEL SLOTS (fixed to this panel)
-          <img src="images/Slot.png" alt="s1" id="s1" class="slot">
-          <img src="images/Slot.png" alt="s2" id="s2" class="slot">
-          <img src="images/Slot.png" alt="s3" id="s3" class="slot">
-          <img src="images/Slot.png" alt="s4" id="s4" class="slot"> -->
         </div>
 
         <div class="lampboard-dropdown">
@@ -66,15 +74,7 @@
 
         <!-- METER + SLOTS WRAPPER (this fixes drifting) -->
         <div class="meter-area">
-          <!-- <img src="images/Slot.png" alt="s5"  id="s5"  class="slot">
-          <img src="images/Slot.png" alt="s6"  id="s6"  class="slot">
-          <img src="images/Slot.png" alt="s7"  id="s7"  class="slot">
-          <img src="images/Slot.png" alt="s8"  id="s8"  class="slot">
-          <img src="images/Slot.png" alt="s9"  id="s9"  class="slot">
-          <img src="images/Slot.png" alt="s10" id="s10" class="slot">
-          <img src="images/Slot.png" alt="s11" id="s11" class="slot">
-          <img src="images/Slot.png" alt="s12" id="s12" class="slot"> -->
-
+ 
           <div class="meter-panel">
             <div class="meters">
               <h3 id="ammter1-label">Ammeter-1</h3>
@@ -86,6 +86,14 @@
                 <img class="ammeter-img" src="images/ammeter.png" alt="Ammeter">
                 <div class="meter-needle1">
                   <img src="images/needle.png" alt="needle">
+                </div>
+                <div>
+                    <button class="point-C">C</button>
+                   <button class="point-D">D</button>
+                    
+                   <div id="pointC" class="point"></div>
+                   <div id="pointD" class="point"></div>
+                   
                 </div>
               </div>
 

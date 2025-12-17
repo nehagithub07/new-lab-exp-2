@@ -1,0 +1,159 @@
+ /* Themed A/B buttons on MCB */
+ .point-R,
+ .point-B,
+ .point-L,
+ .point-F,
+ .point-A,
+ .point-C,
+ .point-D {
+   position: absolute;
+   width: 44px;
+   height: 44px;
+   border-radius: 12px;
+   border: 2px solid rgba(17, 17, 17, 0.45);
+   background: linear-gradient(145deg, #fdf5e6, #e5d5bc 55%, #cdb89d);
+   box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.6),
+     inset 0 -3px 8px rgba(0, 0, 0, 0.12),
+     0 8px 16px rgba(0, 0, 0, 0.18);
+   color: #2f241a;
+   font-weight: 700;
+   letter-spacing: 0.08em;
+   cursor: pointer;
+   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+ }
+
+ .point-R:hover,
+ .point-B:hover,
+ .point-L:hover,
+ .point-F:hover,
+ .point-A:hover,
+ .point-C:hover,
+ .point-D:hover {
+   transform: translateY(-2px);
+   box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.7),
+     inset 0 -3px 8px rgba(0, 0, 0, 0.14),
+     0 12px 18px rgba(0, 0, 0, 0.22);
+   filter: saturate(1.04);
+ }
+
+ .point-R:active,
+ .point-B:active,
+ .point-L:active,
+ .point-F:active,
+ .point-A:active,
+ .point-C:active,
+ .point-D:active {
+   transform: translateY(0);
+   box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.55),
+     inset 0 -3px 8px rgba(0, 0, 0, 0.12),
+     0 6px 12px rgba(0, 0, 0, 0.18);
+ }
+
+ #pointR {
+   position: absolute;
+   left: 45px;
+   top: 162px;
+ }
+
+ #pointB {
+   position: absolute;
+   left: 80px;
+   top: 162px;
+ }
+
+ #pointL {
+   position: absolute;
+   left: 55px;
+   top: 200px;
+ }
+
+ #pointF {
+   position: absolute;
+    left: 115px;
+   top: 200px;
+ }
+
+ #pointA {
+   position: absolute;
+  left: 85px;
+  top: 200px;
+ }
+
+ #pointC {
+   position: absolute;
+   left: 50.5px;
+  top: 150px;
+ 
+ 
+ }
+
+ #pointD {
+   position: absolute;
+  left: 112px;
+   top: 150px;
+    
+ }
+
+ .point-R {
+   position: absolute;
+   width: 24px;
+   height: 24px;
+   left: 30px;
+   top: 178px;
+   font-weight: bold;
+ }
+
+ .point-B {
+   font-weight: bold;
+   position: absolute;
+   width: 24px;
+   height: 24px;
+   left: 62px;
+   top: 178px;
+ }
+
+ .point-L {
+   font-weight: bold;
+   position: absolute;
+   width: 24px;
+   height: 24px;
+   left: 40px;
+   top: 210px;
+ }
+
+ .point-F {
+   font-weight: bold;
+   position: absolute;
+   width: 24px;
+   height: 24px;
+   left: 70px;
+   top: 210px;
+ }
+
+ .point-A {
+   font-weight: bold;
+   position: absolute;
+   width: 24px;
+   height: 24px;
+   left: 100px;
+   top: 210px;
+ }
+
+ .point-C {
+   font-weight: bold;
+   position: absolute;
+   width: 24px;
+   height: 24px;
+   left: 40px;
+   top: 162px;
+ }
+
+ .point-D {
+   font-weight: bold;
+   position: absolute;
+   width: 24px;
+   height: 24px;
+   left:  100px;
+   top: 162px;
+ }
+
