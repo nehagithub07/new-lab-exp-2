@@ -46,12 +46,17 @@
 
         <div class="lampboard-dropdown">
            <select name="number" id="number">
-             <option value="">Select a number</option>
+             <option value="">Select number of bulbs</option>
              <option value="1">1</option>
              <option value="2">2</option>
              <option value="3">3</option>
              <option value="4">4</option>
              <option value="5">5</option>
+             <option value="6">6</option>
+             <option value="7">7</option>
+             <option value="8">8</option>
+             <option value="9">9</option>
+             <option value="10">10</option>
            </select>
         </div>
         <div class="lamp-board">
@@ -67,6 +72,14 @@
             <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
             <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
           </div>
+           <div>
+            <button class="point-L1">L1</button>
+            <div id="pointL1" class="point"></div>   
+            </div>
+            <div>
+              <button class="point-L2">L2</button>     
+              <div id="pointL2" class="point"></div>  
+            </div>
         </div>
       </aside>
 
@@ -102,12 +115,28 @@
                 <div class="meter-needle2">
                   <img src="images/needle.png" alt="needle">
                 </div>
+                <div>
+                   <button class="point-E">E</button>
+                   <button class="point-G">G</button>
+                    
+                   <div id="pointE" class="point"></div>
+                   <div id="pointG" class="point"></div>
+                   
+                </div>
               </div>
 
               <div class="meter-card">
                 <img src="images/voltmeter.png" alt="Voltmeter">
                 <div class="meter-needle3">
                   <img src="images/needle.png" alt="needle">
+                </div>
+                 <div>
+                   <button class="point-H">H</button>
+                   <button class="point-I">I</button>
+                    
+                   <div id="pointH" class="point"></div>
+                   <div id="pointI" class="point"></div>
+                   
                 </div>
               </div>
 
@@ -116,23 +145,43 @@
                 <div class="meter-needle4">
                   <img src="images/needle.png" alt="needle">
                 </div>
+                 <div>
+                   <button class="point-J">J</button>
+                   <button class="point-K">K</button>
+                    
+                   <div id="pointJ" class="point"></div>
+                   <div id="pointK" class="point"></div>
+                   
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <div class="workspace">
+          
           <div class="equipment-row">
+            
             <div class="assembly">
+             
               <div class="motor-box">
                 <img src="images/shuntmotor.png" alt="Motor">
-                <div class="connector-strip top">
-                  <div class="connector"><span class="dot"></span><span class="label">A1</span></div>
-                  <div class="connector"><span class="dot"></span><span class="label">Z1</span></div>
+                
+                <div>
+                  <button class="point-A1">A1</button>
+                  <button class="point-Z1">Z1</button>
+                        
+                  <div id="pointA1" class="point"></div>
+                  <div id="pointZ1" class="point"></div>
+                   
                 </div>
-                <div class="connector-strip bottom">
-                  <div class="connector"><span class="dot"></span><span class="label">A2</span></div>
-                  <div class="connector"><span class="dot"></span><span class="label">Z2</span></div>
+                <div>
+                  <button class="point-A2">A2</button>
+                  <button class="point-Z2">Z2</button>
+                        
+                  <div id="pointA2" class="point"></div>
+                  <div id="pointZ2" class="point"></div>
+                   
                 </div>
               </div>
 
@@ -142,14 +191,23 @@
 
               <div class="generator-box">
                 <img class="generator-body" src="images/Rotor-body.png" alt="Rotor body">
-                <img class="generator-rotor" id="gr" src="images/Generator-Rotor.png" alt="Generator rotor">
-                <div class="connector-strip top">
-                  <div class="connector"><span class="dot"></span><span class="label">A3</span></div>
-                  <div class="connector"><span class="dot"></span><span class="label">Z3</span></div>
+                <img class="generator-rotor" id="gr" src="images/Generator-Rotor.png" alt="Generator rotor">               
+              
+                  <div>
+                     <button class="point-A3">A3</button>
+                     <button class="point-Z3">Z3</button>
+                           
+                     <div id="pointA3" class="point"></div>
+                     <div id="pointZ3" class="point"></div>
+                   
                 </div>
-                <div class="connector-strip bottom">
-                  <div class="connector"><span class="dot"></span><span class="label">A4</span></div>
-                  <div class="connector"><span class="dot"></span><span class="label">Z4</span></div>
+                  <div>
+                     <button class="point-A4">A4</button>
+                     <button class="point-Z4">Z4</button>
+                           
+                     <div id="pointA4" class="point"></div>
+                     <div id="pointZ4" class="point"></div>
+                   
                 </div>
               </div>
             </div>

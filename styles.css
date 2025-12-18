@@ -152,7 +152,7 @@ h3 {
   aspect-ratio: 4 / 3;
   overflow: hidden;
   margin: 0 auto clamp(10px, 2vw, 18px);
-  height: 45%;
+  height: 42%;
   right: 10px;
 }
 
@@ -209,8 +209,8 @@ h3 {
   position: relative;
   margin-top: clamp(12px, 2vw, 22px);
   width: 100%;
-  max-width: 260px;
-  height: 300px;
+  max-width: 290px;
+  height: 350px;
   left: -5px;
  
   /* Removed fixed height: let aspect-ratio control for responsiveness */
@@ -263,7 +263,7 @@ h3 {
 .lampboard-dropdown {
   width: 100%;
   max-width: 300px;
-  margin: 0px 0px 1px -11px;
+  margin: 0px 0px 1px -12px;
   padding: 2px;
   background: linear-gradient(180deg, #f6eedc, #e8dcc6);
   border: 2px solid rgba(17, 17, 17, 0.25);
@@ -311,6 +311,22 @@ h3 {
 
 }
 
+.lampboard-dropdown select option {
+  color: #2f241a;
+  font-weight: 600;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, #fff7e5, #e3d2b8 60%, #ceb896);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.15);
+}
+
+.lampboard-dropdown select option:checked {
+  background: linear-gradient(180deg, #f0dfbf, #d5c09a);
+}
+
+.lampboard-dropdown select option:hover {
+  background: linear-gradient(180deg, #ffeec7, #e6cda1);
+}
+
 
 .meter-area {
   position: relative;
@@ -321,7 +337,7 @@ h3 {
 .meter-panel {
   width: 100%;
   aspect-ratio: 900 / 230;
-  min-height: clamp(250px, 25vw, 250px);
+  min-height: clamp(250px, 25vw, 270px);
   /* Reduced min-height for better vertical fit */
   height: auto;
   background-image: url(images/wooden-texture.jpg);
@@ -432,7 +448,7 @@ h3 {
 #voltmeter2-label {
   margin-top: 40px;
   position: absolute;
-  top: -40px;
+  top: -35px;
   left: 10px;
   grid-row: 2;
   letter-spacing: 0.08em;
@@ -523,8 +539,9 @@ h3 {
 ========================= */
 .workspace {
   position: absolute;
-  top: 291px;
+  top: 300px;
   left:21px;
+  height: 270px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
