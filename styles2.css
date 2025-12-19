@@ -235,13 +235,13 @@ top: 167px;
 #pointL1 {
   position: absolute;
   left: 62px;
-   top: 290px;
+   top: 280px;
 }
 
 #pointL2 {
    position: absolute;
   left:195px;
-  top: 290px;
+top: 280px;
 }
 
  .point-R {
@@ -432,7 +432,7 @@ top: 167px;
    width: 24px;
    height: 24px;
    left: 45px;
-   top: 300px;
+   top: 290px;
 }
 
 .point-L2 {
@@ -441,6 +441,6 @@ top: 167px;
    width: 24px;
    height: 24px;
    left:  180px;
- top: 300px;
+ top: 290px;
 
 }

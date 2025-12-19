@@ -91,8 +91,8 @@
           <div class="meter-panel">
             <div class="meters">
               <h3 id="ammter1-label">Ammeter-1</h3>
+               <h3 id="voltmeter1-label">Voltmeter-1</h3>
               <h3 id="ammter2-label">Ammeter-2</h3>
-              <h3 id="voltmeter1-label">Voltmeter-1</h3>
               <h3 id="voltmeter2-label">Voltmeter-2</h3>
 
               <div class="meter-card">
@@ -111,10 +111,11 @@
               </div>
 
               <div class="meter-card">
-                <img src="images/ammeter.png" alt="Ammeter">
-                <div class="meter-needle2">
+                 <img src="images/voltmeter.png" alt="Voltmeter">
+                <div class="meter-needle3">
                   <img src="images/needle.png" alt="needle">
                 </div>
+               
                 <div>
                    <button class="point-E">E</button>
                    <button class="point-G">G</button>
@@ -126,8 +127,8 @@
               </div>
 
               <div class="meter-card">
-                <img src="images/voltmeter.png" alt="Voltmeter">
-                <div class="meter-needle3">
+                <img src="images/ammeter.png" alt="Ammeter">
+                <div class="meter-needle2">
                   <img src="images/needle.png" alt="needle">
                 </div>
                  <div>
@@ -214,7 +215,50 @@
           </div>
         </div>
 
-        <section class="data-section">
+        <section class="observation-section observation-floating">
+          <div class="observation-header">
+            <div>
+              <h3>Observation Table</h3>
+              <p class="observation-caption">Select lamp load, add the paired readings.</p>
+            </div>
+            <div class="live-readings">
+              <div class="reading-pill">
+                <span class="reading-label">Ammeter-1</span>
+                <span id="liveA1" class="reading-value">--</span>
+              </div>
+              <div class="reading-pill">
+                <span class="reading-label">Voltmeter-1</span>
+                <span id="liveV1" class="reading-value">--</span>
+              </div>
+              <div class="reading-pill">
+                <span class="reading-label">Ammeter-2</span>
+                <span id="liveA2" class="reading-value">--</span>
+              </div>
+              <div class="reading-pill">
+                <span class="reading-label">Voltmeter-2</span>
+                <span id="liveV2" class="reading-value">--</span>
+              </div>
+            </div>
+          </div>
+          <div class="observation-table-wrapper">
+            <table id="observationTable">
+              <thead>
+                <tr>
+                  <th>S. No.</th>
+                  <th>Current (A)</th>
+                  <th>Voltage (V)</th>
+                </tr>
+              </thead>
+              <tbody id="observationBody">
+                <tr class="placeholder-row">
+                  <td colspan="3">No readings added yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- <section class="data-section">
           <div class="data-table">
             <div class="table-header">
               <span>Sr No.</span><span>Current (A)</span><span>Voltage (V)</span>
@@ -225,7 +269,7 @@
             <div class="table-row"><span></span><span></span><span></span></div>
             <div class="table-row"><span></span><span></span><span></span></div>
           </div>
-        </section>
+        </section> -->
       </section>
 
       <aside class="right-column">
@@ -250,6 +294,7 @@
       </div>
       <div class="graph-canvas">
         <div class="graph-bars" id="graphBars"></div>
+        <div id="graphPlot" class="graph-plot" aria-label="Voltage vs Current graph"></div>
       </div>
     </section>
   </main>

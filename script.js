@@ -1,3 +1,123 @@
+let connectionsVerified = false;
+let starterMoved = false;
+let mcbOn = false;
+const CONNECTION_VERIFIED_EVENT = "connections-verified";
+const MCB_TURNED_OFF_EVENT = "mcb-turned-off";
+
+// Step-by-step helper popups
+const stepGuide = (() => {
+  const steps = [
+    {
+      id: "connect",
+      title: "Make the connections",
+      copy: "Use the label points to wire the circuit or press Auto Connect. When you are done, hit Check Connections."
+    },
+    {
+      id: "mcb",
+      title: "Turn on the MCB",
+      copy: "Connections are correct. Click the MCB to switch it on before moving the starter."
+    },
+    {
+      id: "starter",
+      title: "Move the starter handle",
+      copy: "Drag the starter handle from left to right to start the setup."
+    },
+    {
+      id: "reading",
+      title: "Add a reading",
+      copy: "Choose the number of bulbs and click Add Table to log the paired readings."
+    },
+    {
+      id: "graph",
+      title: "Plot the graph",
+      copy: "After adding at least six readings, click Graph to draw Voltage vs Load Current."
+    },
+    {
+      id: "done",
+      title: "All steps complete",
+      copy: "Great job! You can keep experimenting or press Reset to run the flow again."
+    }
+  ];
+
+  let activeIndex = 0;
+
+  const modal = document.createElement("div");
+  modal.className = "step-modal is-hidden";
+  modal.innerHTML = `
+    <div class="step-modal__backdrop"></div>
+    <div class="step-modal__card">
+      <div class="step-modal__header">
+        <span class="step-modal__step"></span>
+        <button class="step-modal__close" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="step-modal__body">
+        <p class="step-modal__title"></p>
+        <p class="step-modal__copy"></p>
+      </div>
+      <button class="step-modal__cta" type="button">Got it</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const stepLabel = modal.querySelector(".step-modal__step");
+  const titleEl = modal.querySelector(".step-modal__title");
+  const copyEl = modal.querySelector(".step-modal__copy");
+  const closeBtn = modal.querySelector(".step-modal__close");
+  const ctaBtn = modal.querySelector(".step-modal__cta");
+  const backdrop = modal.querySelector(".step-modal__backdrop");
+
+  function hide() {
+    modal.classList.add("is-hidden");
+  }
+
+  function renderStep(step, index) {
+    if (!step) return;
+    const totalPlayable = steps.length - 1; // last step is the completion note
+    const stepNumber = step.id === "done" ? "Complete" : `Step ${index + 1} of ${totalPlayable}`;
+    stepLabel.textContent = stepNumber;
+    titleEl.textContent = step.title;
+    copyEl.textContent = step.copy;
+  }
+
+  function showCurrent() {
+    const step = steps[activeIndex];
+    if (!step) return;
+    renderStep(step, activeIndex);
+    modal.classList.remove("is-hidden");
+  }
+
+  function complete(stepId) {
+    const expected = steps[activeIndex];
+    if (!expected || expected.id !== stepId) return;
+    activeIndex = Math.min(activeIndex + 1, steps.length - 1);
+    showCurrent();
+  }
+
+  function reset() {
+    activeIndex = 0;
+    showCurrent();
+  }
+
+  closeBtn?.addEventListener("click", hide);
+  ctaBtn?.addEventListener("click", hide);
+  backdrop?.addEventListener("click", hide);
+
+  // Show the first prompt when the page is ready
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    showCurrent();
+  } else {
+    document.addEventListener("DOMContentLoaded", showCurrent, { once: true });
+  }
+
+  return { complete, reset, showCurrent, hide };
+})();
+
+const sharedControls = {
+  updateControlLocks: () => {},
+  setMcbState: () => {},
+  starterHandle: null
+};
+
 jsPlumb.ready(function () {
   const ringSvg =
     'data:image/svg+xml;utf8,' +
@@ -26,6 +146,7 @@ jsPlumb.ready(function () {
   const anchors = {
     pointR: [1, 0.5, 1, 0], // right side
     pointB: [0, 0.5, -1, 0], // left side
+    
     pointL: [1, 0.5, 1, 0], // right
     pointF: [0, 0.5, -1, 0], // left
     pointA: [1, 0.5, 1, 0], // right
@@ -240,6 +361,146 @@ jsPlumb.ready(function () {
     const [a, b] = pair.split("-");
     return [a, b].sort().join("-");
   }));
+  const allowedConnections = new Set(requiredConnections);
+
+  const mcbImg = document.querySelector(".mcb-toggle");
+  const starterHandle = document.querySelector(".starter-handle");
+
+  let isDragging = false;
+  let startX, startLeft, startTop;
+
+  function startDrag(e) {
+    if (e.button !== 0 || !connectionsVerified || !mcbOn) return;
+    isDragging = true;
+    startX = e.clientX;
+    startLeft = parseFloat(starterHandle.style.left) || 16.67;
+    startTop = parseFloat(starterHandle.style.top) || 37.04;
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', endDrag);
+    starterHandle.style.cursor = 'grabbing';
+    e.preventDefault();
+  }
+
+  function drag(e) {
+    if (!isDragging) return;
+    const deltaX = e.clientX - startX;
+    const parentRect = starterHandle.parentElement.getBoundingClientRect();
+    const deltaPercent = (deltaX / parentRect.width) * 100;
+    const progress = (startLeft + deltaPercent - 16.67) / (68 - 16.67);
+    const t = Math.max(0, Math.min(1, progress));  // Clamp t 0-1
+
+    // Linear left
+    const newLeft = 16.67 + t * (68 - 16.67);
+
+    // Curved top: sinusoidal dip (negative for "up" arc; adjust 15 for height)
+    const curveHeight = 15;  // % rise in middle
+    const newTop = 37.04 - curveHeight * Math.sin(t * Math.PI);
+
+    starterHandle.style.left = newLeft + '%';
+    starterHandle.style.top = newTop + '%';
+  }
+
+  function endDrag(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mouseup', endDrag);
+
+    // Get current t from left (approx)
+    const currentLeft = parseFloat(starterHandle.style.left) || 16.67;
+    const currentT = (currentLeft - 16.67) / (68 - 16.67);
+    const threshold = 0.5;
+    let targetT = currentT > threshold ? 1 : 0;
+
+    // Snap to target
+    const targetLeft = 16.67 + targetT * (68 - 16.67);
+    const targetTop = 37.04 - 15 * Math.sin(targetT * Math.PI);
+    starterHandle.style.left = targetLeft + '%';
+    starterHandle.style.top = targetTop + '%';
+
+    starterMoved = targetT === 1;
+    if (starterMoved) {
+      stepGuide.complete("starter");
+    }
+    starterHandle.style.cursor = (connectionsVerified && mcbOn && !starterMoved) ? 'grab' : 'default';
+    updateControlLocks();
+    e.preventDefault();
+  }
+
+  function updateStarterUI() {
+    if (!starterHandle) return;
+    if (connectionsVerified && mcbOn && !starterMoved) {
+      starterHandle.style.cursor = 'grab';
+      starterHandle.onmousedown = startDrag;
+      // Reset to start pos if needed
+      starterHandle.style.left = '16.67%';
+      starterHandle.style.top = '37.04%';
+    } else {
+      starterHandle.style.cursor = 'default';
+      starterHandle.onmousedown = null;
+      if (!starterMoved) {
+        starterHandle.style.left = '16.67%';
+        starterHandle.style.top = '37.04%';
+      }
+    }
+    if (starterMoved) {
+      starterHandle.classList.add('moved');
+    } else {
+      starterHandle.classList.remove('moved');
+    }
+  }
+
+  function updateControlLocks() {
+    const ready = connectionsVerified && mcbOn && starterMoved;
+    const lampSelect = document.getElementById("number");
+    const addBtn = Array.from(document.querySelectorAll('.pill-btn')).find(btn => btn.textContent.trim() === 'Add Table');
+    if (lampSelect) lampSelect.disabled = !ready;
+    if (addBtn) addBtn.disabled = !ready;
+    updateStarterUI();
+  }
+
+  function setMcbState(isOn, options = {}) {
+    if (!mcbImg) return;
+    const { silent = false } = options;
+    const wasOn = mcbOn;
+    mcbOn = !!isOn;
+    mcbImg.src = isOn ? "images/mcb-on.png" : "images/mcb-off.png";
+    mcbImg.classList.toggle("is-on", mcbOn);
+    if (wasOn && !mcbOn) {
+      starterMoved = false;
+      if (starterHandle) {
+        starterHandle.style.left = '16.67%';
+        starterHandle.style.top = '37.04%';
+        starterHandle.classList.remove('moved');
+      }
+      updateControlLocks();
+      window.dispatchEvent(new CustomEvent(MCB_TURNED_OFF_EVENT));
+      if (!silent) {
+        alert("You turned off the MCB. Turn it back on to continue the experiment.");
+      }
+      return;
+    }
+    updateControlLocks();
+  }
+
+  sharedControls.updateControlLocks = updateControlLocks;
+  sharedControls.setMcbState = setMcbState;
+  sharedControls.starterHandle = starterHandle;
+
+  if (mcbImg) {
+    mcbImg.style.cursor = "pointer";
+    mcbImg.addEventListener("click", function () {
+      if (!connectionsVerified) {
+        alert("Make and check the connections before turning on the MCB.");
+        return;
+      }
+      const nextState = !mcbOn;
+      setMcbState(nextState);
+      if (nextState) {
+        stepGuide.complete("mcb");
+      }
+    });
+  }
 
   // Click on label buttons (e.g., .point-R) to remove connections from corresponding point
   document.querySelectorAll('[class^="point-"]').forEach(btn => {
@@ -279,10 +540,14 @@ jsPlumb.ready(function () {
     checkBtn.addEventListener("click", function () {
       const connections = jsPlumb.getAllConnections();
       const seenKeys = new Set();
+      const illegal = [];
 
       connections.forEach(conn => {
         const key = [conn.sourceId, conn.targetId].sort().join("-");
         seenKeys.add(key);
+        if (!allowedConnections.has(key)) {
+          illegal.push(key);
+        }
       });
 
       const missing = [];
@@ -290,14 +555,32 @@ jsPlumb.ready(function () {
         if (!seenKeys.has(req)) missing.push(req);
       });
 
-      if (!missing.length) {
-        alert("Connection is correct");
+      if (!missing.length && !illegal.length) {
+        alert("Connections are correct. Click the MCB to turn it on.");
+        connectionsVerified = true;
+        starterMoved = false;
+        window.dispatchEvent(new CustomEvent(CONNECTION_VERIFIED_EVENT));
         return;
       }
 
+      const formatList = (list) => list.slice(0, 5).map(k => k.replace(/point/gi, "").replace(/-/g, " - ")).join(", ");
       let message = "Connection not correct";
-      message += `\nMissing ${missing.length} required connection(s).`;
+      if (illegal.length) {
+        message += `\nWrong/extra connections detected${illegal.length > 5 ? " (showing first few)" : ""}: ${formatList(illegal)}`;
+      }
+      if (missing.length) {
+        message += `\nMissing ${missing.length} required connection(s)${missing.length > 5 ? " (showing first few)" : ""}: ${formatList(missing)}`;
+      }
       alert(message);
+      setMcbState(false, { silent: true });
+      connectionsVerified = false;
+      starterMoved = false;
+      updateControlLocks();
+      stepGuide.reset();
+      const lampSel = document.getElementById("number");
+      if (lampSel) lampSel.disabled = true;
+      const addBtn = Array.from(document.querySelectorAll('.pill-btn')).find(btn => btn.textContent.trim() === 'Add Table');
+      if (addBtn) addBtn.disabled = true;
     });
   } else {
     console.error("Check button not found! Looking for '.pill-btn' with text 'Check Connections'. Add it or check HTML.");
@@ -392,3 +675,316 @@ jsPlumb.ready(function () {
   }
   window.addEventListener("resize", lockPointsToBase);
 });
+
+// -----------------------------------------------
+// Observation table + meter needle interactions
+// -----------------------------------------------
+(function initObservations() {
+  const lampSelect = document.getElementById("number");
+  const bulbs = Array.from(document.querySelectorAll(".lamp-bulb"));
+
+  const liveA1 = document.getElementById("liveA1");
+  const liveV1 = document.getElementById("liveV1");
+  const liveA2 = document.getElementById("liveA2");
+  const liveV2 = document.getElementById("liveV2");
+
+  const observationBody = document.getElementById("observationBody");
+  const graphBars = document.getElementById("graphBars");
+  const graphPlot = document.getElementById("graphPlot");
+  const graphSection = document.querySelector(".graph-section");
+
+  const pills = Array.from(document.querySelectorAll(".pill-btn"));
+  const addTableBtn = pills.find((btn) => btn.textContent.trim() === "Add Table");
+  const graphBtn = pills.find((btn) => btn.textContent.trim() === "Graph");
+  const resetBtn = pills.find((btn) => btn.textContent.trim() === "Reset");
+
+  const needle1 = document.querySelector(".meter-needle1");
+  const needle2 = document.querySelector(".meter-needle2");
+  const needle3 = document.querySelector(".meter-needle3");
+  const needle4 = document.querySelector(".meter-needle4");
+
+  // Reading sets pulled from the legacy implementation
+  const ammeter1Readings = [3, 3.6, 5.4, 6.8, 8, 10, 11.5, 13, 14.2, 15.2];
+  const voltmeter1Readings = [225, 225, 225, 225, 225, 225, 225, 225, 225, 225];
+  const ammeter2Readings = [1.2, 2.8, 3.2, 3.6, 5.5, 7, 8.1, 10.2, 11, 12.7];
+  const voltmeter2Readings = [220, 212, 208, 205, 200, 195, 189, 184, 179, 176];
+
+  const readingsRecorded = [];
+  let selectedIndex = -1;
+
+  function enforceReady(action) {
+    if (!connectionsVerified) {
+      alert("You have to check the connections first.");
+      if (action === "lampSelect" && lampSelect) {
+        lampSelect.value = "";
+        selectedIndex = -1;
+        updateBulbs(0);
+        updateLiveReadings(-1);
+        updateNeedles(-1);
+      }
+      return false;
+    }
+    if (!mcbOn) {
+      alert("Turn on the MCB before continuing.");
+      return false;
+    }
+    if (!starterMoved) {
+      alert("You have to move starter handle from left to right");
+      return false;
+    }
+    return true;
+  }
+
+  function setNeedleRotation(el, angleDeg) {
+    if (!el) return;
+    el.style.transform = `translate(-50%, -90%) rotate(${angleDeg}deg)`;
+  }
+
+  function clamp(val, min, max) {
+    return Math.min(Math.max(val, min), max);
+  }
+
+  function currentToAngle(currentValue, maxCurrent = 20) {
+    const minAngle = -74; // aligns with legacy ammeter artwork
+    const maxAngle = 74;
+    const safeValue = clamp(currentValue, 0, maxCurrent);
+    const ratio = safeValue / maxCurrent;
+    return minAngle + (maxAngle - minAngle) * ratio;
+  }
+
+  function voltageToAngle(voltageValue) {
+    const minAngle = -63; // from legacy voltmeter mapping (0 V)
+    const maxAngle = 63;  // 240 V
+    const safeVoltage = clamp(voltageValue, 0, 240);
+    const ratio = safeVoltage / 240;
+    return minAngle + (maxAngle - minAngle) * ratio;
+  }
+
+  function updateBulbs(count) {
+    bulbs.forEach((bulb, idx) => {
+      const isOn = idx < count;
+      bulb.src = isOn ? "images/on-bulb.png" : "images/off-bulb.png";
+      bulb.classList.toggle("on", isOn);
+      bulb.classList.toggle("off", !isOn);
+    });
+  }
+
+  function updateLiveReadings(idx) {
+    if (idx < 0) {
+      [liveA1, liveV1, liveA2, liveV2].forEach((el) => {
+        if (el) el.textContent = "--";
+      });
+      return;
+    }
+    const a1 = ammeter1Readings[idx];
+    const v1 = voltmeter1Readings[idx];
+    const a2 = ammeter2Readings[idx];
+    const v2 = voltmeter2Readings[idx];
+
+    if (liveA1) liveA1.textContent = `${a1.toFixed(1)} A`;
+    if (liveV1) liveV1.textContent = `${v1.toFixed(0)} V`;
+    if (liveA2) liveA2.textContent = `${a2.toFixed(1)} A`;
+    if (liveV2) liveV2.textContent = `${v2.toFixed(0)} V`;
+  }
+
+  function updateNeedles(idx) {
+    if (idx < 0) {
+      setNeedleRotation(needle1, -74);
+      setNeedleRotation(needle2, -74);
+      setNeedleRotation(needle3, -63);
+      setNeedleRotation(needle4, -63);
+      return;
+    }
+    setNeedleRotation(needle1, currentToAngle(ammeter1Readings[idx]));
+    setNeedleRotation(needle2, currentToAngle(ammeter2Readings[idx]));
+    setNeedleRotation(needle3, voltageToAngle(voltmeter1Readings[idx]));
+    setNeedleRotation(needle4, voltageToAngle(voltmeter2Readings[idx]));
+  }
+
+  function renderGraph() {
+    const minPoints = 6;
+    if (readingsRecorded.length < minPoints) {
+      alert(`Add at least ${minPoints} readings, then press the Graph button.`);
+      return;
+    }
+
+    const currents = readingsRecorded.map(r => r.current);
+    const voltages = readingsRecorded.map(r => r.voltage);
+
+    // Keep bars visible until graph is successfully drawn
+    function ensurePlotly() {
+      if (window.Plotly) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.plot.ly/plotly-3.0.1.min.js";
+        script.onload = () => resolve();
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    ensurePlotly().then(() => {
+      if (!graphPlot) return;
+
+      const trace = {
+        x: currents,
+        y: voltages,
+        mode: "lines+markers",
+        type: "scatter",
+        marker: { color: "#1b6fb8", size: 8 },
+        line: { color: "#1b6fb8", width: 3 }
+      };
+      const layout = {
+        title: { text: "<b>Voltage (V) vs Load Current (A)</b>" },
+        margin: { l: 60, r: 20, t: 40, b: 50 },
+        xaxis: { title: "<b>Load Current (A)</b>" },
+        yaxis: { title: "<b>Voltage (V)</b>" },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)"
+      };
+
+      // Hide bar fallback only after successful render
+      if (graphBars) graphBars.style.display = "none";
+      graphPlot.style.display = "block";
+
+      window.Plotly.newPlot(graphPlot, [trace], layout, { displaylogo: false, responsive: true });
+      stepGuide.complete("graph");
+    }).catch(() => {
+      alert("Unable to load graphing library. Please check your connection and try again.");
+    });
+  }
+
+  function addRowToTable(idx) {
+    if (!observationBody) return;
+
+    // remove placeholder
+    const placeholder = observationBody.querySelector(".placeholder-row");
+    if (placeholder) placeholder.remove();
+
+    const row = document.createElement("tr");
+    const serial = readingsRecorded.length; // readingsRecorded already includes the new entry
+    const a2 = ammeter2Readings[idx];
+    const v2 = voltmeter2Readings[idx];
+
+    row.innerHTML = `<td>${serial}</td><td>${a2}</td><td>${v2}</td>`;
+    observationBody.appendChild(row);
+  }
+
+  function handleAddReading() {
+    if (!enforceReady("addReading")) return;
+    if (selectedIndex < 0) return; // no selection, do nothing
+    if (readingsRecorded.length >= 10) return; // cap silently
+    const load = selectedIndex + 1;
+    readingsRecorded.push({
+      load,
+      current: ammeter2Readings[selectedIndex],
+      voltage: voltmeter2Readings[selectedIndex]
+    });
+    addRowToTable(selectedIndex);
+    stepGuide.complete("reading");
+  }
+
+  function handleSelectionChange() {
+    if (!enforceReady("lampSelect")) {
+      lampSelect.value = "";
+      selectedIndex = -1;
+      updateBulbs(0);
+      updateLiveReadings(-1);
+      updateNeedles(-1);
+      return;
+    }
+    const count = parseInt(lampSelect.value, 10);
+    if (isNaN(count) || count < 1 || count > 10) {
+      selectedIndex = -1;
+      updateBulbs(0);
+      updateLiveReadings(-1);
+      updateNeedles(-1);
+      return;
+    }
+    selectedIndex = count - 1;
+    updateBulbs(count);
+    updateLiveReadings(selectedIndex);
+    updateNeedles(selectedIndex);
+  }
+
+  function resetObservations() {
+    readingsRecorded.length = 0;
+    if (observationBody) {
+      observationBody.innerHTML = `<tr class="placeholder-row"><td colspan="3">No readings added yet.</td></tr>`;
+    }
+    selectedIndex = -1;
+    if (lampSelect) lampSelect.value = "";
+    updateBulbs(0);
+    updateLiveReadings(-1);
+    updateNeedles(-1);
+    if (graphBars) graphBars.style.display = "block";
+    if (graphPlot) {
+      graphPlot.innerHTML = "";
+      graphPlot.style.display = "none";
+    }
+    connectionsVerified = false;
+    starterMoved = false;
+    mcbOn = false;
+    sharedControls.setMcbState(false, { silent: true });
+    const starter = sharedControls.starterHandle || document.querySelector(".starter-handle");
+    if (starter) {
+      starter.style.left = '16.67%';
+      starter.style.top = '37.04%';
+      starter.classList.remove('moved');
+    }
+    sharedControls.updateControlLocks();
+    stepGuide.reset();
+  }
+
+  if (lampSelect) {
+    lampSelect.addEventListener("change", handleSelectionChange);
+    lampSelect.disabled = true;
+  }
+
+  if (addTableBtn) {
+    addTableBtn.addEventListener("click", handleAddReading);
+    addTableBtn.disabled = true;
+  }
+
+  if (graphBtn) {
+    graphBtn.addEventListener("click", function () {
+      renderGraph();
+      if (graphSection && typeof graphSection.scrollIntoView === "function") {
+        graphSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", resetObservations);
+  }
+
+  window.addEventListener(MCB_TURNED_OFF_EVENT, function () {
+    selectedIndex = -1;
+    if (lampSelect) {
+      lampSelect.value = "";
+      lampSelect.disabled = true;
+    }
+    if (addTableBtn) {
+      addTableBtn.disabled = true;
+    }
+    updateBulbs(0);
+    updateLiveReadings(-1);
+    updateNeedles(-1);
+  });
+
+  // initialize defaults
+  updateBulbs(0);
+  updateLiveReadings(-1);
+  updateNeedles(-1);
+  sharedControls.updateControlLocks();
+
+  window.addEventListener(CONNECTION_VERIFIED_EVENT, function () {
+    connectionsVerified = true;
+    starterMoved = false;
+    mcbOn = false;
+    sharedControls.setMcbState(false, { silent: true });
+    sharedControls.updateControlLocks();
+    stepGuide.complete("connect");
+  });
+})();

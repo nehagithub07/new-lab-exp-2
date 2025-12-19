@@ -187,6 +187,17 @@ h3 {
   height: auto;
   top: 37.04%;
   left: 16.67%;
+  transform: none;
+  cursor: default;
+  z-index: 5;
+  pointer-events: auto;
+}
+.starter-handle:active {
+  cursor: default;
+}
+.starter-handle.moved {
+  left: 68%;
+  top: 35%;
 }
 
 .led-row {
@@ -207,11 +218,11 @@ h3 {
 ========================= */
 .lamp-board {
   position: relative;
-  margin-top: clamp(12px, 2vw, 22px);
+  top: 4px;
   width: 100%;
   max-width: 290px;
-  height: 350px;
-  left: -5px;
+  height: 345px;
+  left: -8px;
  
   /* Removed fixed height: let aspect-ratio control for responsiveness */
   aspect-ratio: 4 / 3;
@@ -443,8 +454,8 @@ h3 {
 
 /* ---- LABELS (always below meters, never cut) ---- */
 #ammter1-label,
-#ammter2-label,
 #voltmeter1-label,
+#ammter2-label,
 #voltmeter2-label {
   margin-top: 40px;
   position: absolute;
@@ -470,11 +481,11 @@ h3 {
   grid-column: 1;
 }
 
-#ammter2-label {
+#voltmeter1-label{
   grid-column: 2;
 }
 
-#voltmeter1-label {
+#ammter2-label {
   grid-column: 3;
 }
 
@@ -510,12 +521,12 @@ h3 {
     grid-row: 3;
   }
 
-  #ammter2-label {
+  #voltmeter1-label{
     grid-column: 2;
     grid-row: 3;
   }
 
-  #voltmeter1-label {
+  #ammter2-label {
     grid-column: 1;
     grid-row: 4;
   }
@@ -738,6 +749,121 @@ h3 {
   text-overflow: ellipsis;
 }
 
+/* =========================
+   OBSERVATION TABLE
+========================= */
+.observation-section {
+  width: 100%;
+  background: var(--bg);
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  padding: clamp(10px, 2vw, 14px);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 2vw, 14px);
+}
+
+.observation-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.observation-caption {
+  margin-top: 6px;
+  color: #3c3227;
+  font-size: 0.95rem;
+}
+
+.live-readings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reading-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #fdf5e6, #e5d5bc 55%, #cdb89d);
+  border: 2px solid rgba(40, 32, 24, 0.35);
+  border-radius: 999px;
+  box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.6),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.08),
+    0 6px 12px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+  justify-content: center;
+}
+
+.reading-label {
+  font-weight: 700;
+  color: #2f241a;
+  letter-spacing: 0.02em;
+}
+
+.reading-value {
+  font-weight: 700;
+  color: #1e3a5f;
+}
+
+.observation-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+#observationTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f4eee2;
+  border: 2px solid var(--ink);
+}
+
+#observationTable th,
+#observationTable td {
+  border: 1px solid var(--ink);
+  padding: 8px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+#observationTable thead {
+  background: linear-gradient(135deg, #f7efde, #e2d5c2 50%, #cdb9a0);
+  color: #2c1a0a;
+}
+
+#observationTable tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+#observationTable .placeholder-row td {
+  color: #6b5e4e;
+  font-weight: 600;
+}
+
+.observation-floating {
+  position: absolute;
+  top: 310px;
+  right: -28px;
+  width: 32%;
+  min-width: 220px;
+  max-width: 320px;
+  z-index: 5;
+}
+
+@media (max-width: 1100px) {
+  .observation-floating {
+    position: static;
+    width: 100%;
+    max-width: none;
+    margin-top: clamp(12px, 2vw, 16px);
+  }
+}
+
 .pill-btn::before {
   content: "";
   position: absolute;
@@ -831,6 +957,11 @@ h3 {
   display: flex;
   align-items: flex-end;
   gap: clamp(14px, 2vw, 20px);
+}
+
+.graph-plot {
+  position: absolute;
+  inset: clamp(12px, 2vw, 16px);
 }
 
 .bar-group {
@@ -984,6 +1115,100 @@ h3 {
   background: linear-gradient(135deg, #fff7e2, #e3cfa5);
   box-shadow: 0 3px 0 #b18c58, 0 6px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   border-radius: 4px;
+}
+
+/* Guided step popups */
+.step-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;
+  transition: opacity 0.2s ease;
+}
+
+.step-modal.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.step-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.35);
+}
+
+.step-modal__card {
+  position: relative;
+  background: linear-gradient(135deg, #fffaf0, #f1dfc0);
+  border: 2px solid var(--wood-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  width: min(440px, 92vw);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25), 0 2px 0 #b08a55;
+  color: #2c1a0a;
+}
+
+.step-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.step-modal__step {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+}
+
+.step-modal__close {
+  border: none;
+  background: none;
+  color: #2c1a0a;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.step-modal__body p {
+  margin: 0;
+}
+
+.step-modal__title {
+  font-weight: 700;
+  font-size: 1.12rem;
+  margin-bottom: 6px;
+}
+
+.step-modal__copy {
+  line-height: 1.4;
+  font-size: 0.97rem;
+}
+
+.step-modal__cta {
+  margin-top: 12px;
+  background: #1b6fb8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #0f4c82, 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.step-modal__cta:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 0 #0f4c82, 0 6px 12px rgba(0, 0, 0, 0.16);
+}
+
+.mcb-toggle.is-on {
+  filter: drop-shadow(0 0 6px rgba(255, 230, 80, 0.75));
 }
 
 /* =========================
