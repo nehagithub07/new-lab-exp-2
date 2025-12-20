@@ -74,12 +74,14 @@ body {
 }
 
 .top-row {
+
   display: grid;
   grid-template-columns: 1fr 2.6fr 1.2fr;
   gap: clamp(8px, 2vw, 16px);
-  border-bottom: 3px solid var(--ink);  
+  border-bottom: 3px solid var(--ink);
   padding-bottom: clamp(70px, 1.5vw, 16px);
   position: relative;
+
 }
 
 .left-column {
@@ -89,8 +91,7 @@ body {
   max-width: 80%;
 }
 
-.center-column,
-.right-column {
+.center-column {
   padding: clamp(12px, 2vw, 18px);
   border-right: 3px solid var(--ink);
   width: 100%;
@@ -104,24 +105,9 @@ body {
   gap: clamp(19px, 2.5vw, 0px);
   position: relative;
   width: 100%;
-  margin: 0px -90px;
+  margin: 0px -50px;
 }
-.right-column {
-  border-right: none;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
 
-  /* Adjusted widths for better fit */
-  min-width: 190px;
-  max-width: 240px;
-  width: 100%;
-
-  position: sticky;
-  top: 0;
-  /* Adjusted to stick flush to top of panel */
-  align-self: start;
-}
 
 /* =========================
    HEADINGS
@@ -192,9 +178,11 @@ h3 {
   z-index: 5;
   pointer-events: auto;
 }
+
 .starter-handle:active {
   cursor: default;
 }
+
 .starter-handle.moved {
   left: 68%;
   top: 35%;
@@ -223,7 +211,7 @@ h3 {
   max-width: 290px;
   height: 345px;
   left: -8px;
- 
+
   /* Removed fixed height: let aspect-ratio control for responsiveness */
   aspect-ratio: 4 / 3;
   padding: clamp(12px, 1.8vw, 18px);
@@ -481,7 +469,7 @@ h3 {
   grid-column: 1;
 }
 
-#voltmeter1-label{
+#voltmeter1-label {
   grid-column: 2;
 }
 
@@ -521,7 +509,7 @@ h3 {
     grid-row: 3;
   }
 
-  #voltmeter1-label{
+  #voltmeter1-label {
     grid-column: 2;
     grid-row: 3;
   }
@@ -551,7 +539,7 @@ h3 {
 .workspace {
   position: absolute;
   top: 300px;
-  left:21px;
+  left: 21px;
   height: 270px;
   display: flex;
   flex-direction: column;
@@ -624,8 +612,8 @@ h3 {
   height: auto;
 }
 
- 
- 
+
+
 
 /* .littledot {
   width: clamp(12px, 2vw, 18px);
@@ -691,62 +679,17 @@ h3 {
   border-right: none;
 }
 
-.right-column .pill-stack {
-  position: relative;
-  right: 50px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 200px;
-  min-width: 260px;
-  gap: clamp(6px, 1vw, 10px);
-  padding: 12px 10px;
-  margin: 0 auto;
-  background: linear-gradient(180deg, #f9f3e5, #e8dcc6);
-  border: 2px solid rgba(17, 17, 17, 0.2);
-  border-radius: 10px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-gutter: stable both-edges;
-}
 
-.pill-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  max-width: 200px;
-  min-width: 170px;
-  /* IMPORTANT: remove overflow */
-  height: 44px;
-  background: linear-gradient(135deg, #f7efde, #e2d5c2 50%, #cdb9a0);
-  border-radius: 999px;
-  border: 2px solid rgba(40, 32, 24, 0.35);
-  box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.6),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.08),
-    0 8px 18px rgba(0, 0, 0, 0.18);
 
-  overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-  color: #2f2a21;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  cursor: pointer;
 
-  padding: 0 clamp(10px, 2vw, 16px);
-  flex-shrink: 0;
-  font-size: clamp(0.75rem, 1.2vw, 0.8rem);
-  line-height: 1.1;
-  text-align: center;
+@keyframes pill-sheen {
+  from {
+    transform: translateX(-140%);
+  }
 
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  to {
+    transform: translateX(140%);
+  }
 }
 
 /* =========================
@@ -817,6 +760,7 @@ h3 {
 
 #observationTable {
   width: 100%;
+  height: 50px;
   border-collapse: collapse;
   background: #f4eee2;
   border: 2px solid var(--ink);
@@ -847,11 +791,11 @@ h3 {
 
 .observation-floating {
   position: absolute;
-  top: 310px;
-  right: -28px;
-  width: 32%;
-  min-width: 220px;
-  max-width: 320px;
+  top: 200px;
+  right: -400px;
+  width: 50%;
+  min-width: 230px;
+  max-width: 380px;
   z-index: 5;
 }
 
@@ -862,31 +806,6 @@ h3 {
     max-width: none;
     margin-top: clamp(12px, 2vw, 16px);
   }
-}
-
-.pill-btn::before {
-  content: "";
-  position: absolute;
-  inset: 4px 6px auto 6px;
-  height: 42%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0));
-  pointer-events: none;
-}
-
-.pill-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.6),
-    inset 0 -4px 10px rgba(0, 0, 0, 0.1),
-    0 12px 20px rgba(0, 0, 0, 0.22);
-  filter: saturate(1.02);
-}
-
-.pill-btn:active {
-  transform: translateY(0);
-  box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.45),
-    inset 0 -3px 8px rgba(0, 0, 0, 0.16),
-    0 6px 12px rgba(0, 0, 0, 0.18);
 }
 
 /* =========================
@@ -1102,7 +1021,7 @@ h3 {
 }
 
 .starter-label {
- position: absolute;
+  position: absolute;
   letter-spacing: 0.1em;
   top: 104.5%;
   left: 50%;
@@ -1212,6 +1131,123 @@ h3 {
 }
 
 /* =========================
+   INSTRUCTION MODAL
+========================= */
+.instruction-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 5000;
+}
+
+.instruction-overlay.is-hidden {
+  display: none;
+}
+
+.instruction-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+.instruction-dialog {
+  position: relative;
+  width: min(1100px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fdf7e7;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.instruction-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.vl-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+}
+
+.p-6 {
+  padding: 24px;
+}
+
+.instruction-body {
+  color: #374151;
+}
+
+.instruction-dialog .space-y-8 > * + * {
+  margin-top: 26px;
+}
+
+.instruction-dialog .space-y-4 > * + * {
+  margin-top: 14px;
+}
+
+.instruction-dialog table {
+  border-collapse: collapse;
+  width: 100%;
+  background: #fff;
+}
+
+.instruction-dialog th,
+.instruction-dialog td {
+  border: 1px solid #e5e7eb;
+  padding: 10px;
+}
+
+.instruction-dialog th {
+  background: #f4f6f8;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.instruction-table-wrapper {
+  max-height: 320px;
+  overflow: auto;
+  border-radius: 10px;
+}
+
+.instruction-image {
+  max-height: 500px;
+  object-fit: contain;
+}
+
+.instruction-legend {
+  color: #4b5563;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 260ms ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
    RESPONSIVE LAYOUT
 ========================= */
 /* Enable horizontal overflow/scrolling for larger screens (e.g., wider than typical "100%" viewport like 1024px) */
@@ -1236,31 +1272,128 @@ h3 {
   }
 }
 
+#pill-stack {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  width: 100%;
+  max-width: 500px;
+  min-width: 350px;
+  height: 150px;
+  margin-top: 20px;
+
+}
+
+.pill-btn {
+   position: absolute;
+   right: 50px;
+  color: white;
+  border: none;
+  padding: 10px 38px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.pill-btn {background-image: linear-gradient(to right, #232526 0%, #414345  51%, #232526  100%)}
+ 
+ .pill-btn:hover {
+   background-position: right center; /* change the direction of the change here */
+   color: #fff;
+   text-decoration: none;
+ }
+
+.pill-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  transition: left 0.3s ease;
+}
+
+.pill-btn:hover::before {
+  left: 0;
+}
+
+.pill-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.pill-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+.graph-pill-btn {
+     position: absolute;
+   right: 50px;
+  color: white;
+  border: none;
+  padding: 10px 38px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(to right, #232526 0%, #414345  51%, #232526  100%)
+}
+
+.graph-pill-btn:hover {
+   background-position: right center; /* change the direction of the change here */
+   color: #fff;
+   text-decoration: none;
+ }
+
+.graph-pill-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  transition: left 0.3s ease;
+}
+
+.graph-pill-btn:hover::before {
+  left: 0;
+}
+
+.graph-pill-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.graph-pill-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+/* Responsive design */
+@media (max-width: 768px) {
+
+
+  #pill-stack {
+    max-width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+
+}
+
 @media (max-width: 1100px) {
   .top-row {
     grid-template-columns: 1fr 2fr;
-  }
-
-  .right-column {
-    grid-column: span 2;
-    position: static;
-    max-width: none;
-    min-width: 0;
-    border-top: 3px solid var(--ink);
-  }
-
-  .right-column .pill-stack {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(160px, 1fr));
-    justify-items: center;
-    gap: 12px;
-    /* No max-height/overflow needed in grid mode */
-    overflow: visible;
-  }
-
-  .pill-btn {
-    max-width: 260px;
-    width: 100%;
   }
 }
 
@@ -1270,15 +1403,11 @@ h3 {
   }
 
   .left-column,
-  .center-column,
-  .right-column {
+  .center-column {
     border: none;
     border-bottom: 3px solid var(--ink);
   }
 
-  .right-column {
-    border-left: none;
-  }
 
   .equipment-row {
     justify-content: center;

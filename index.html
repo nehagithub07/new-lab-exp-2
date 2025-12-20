@@ -219,25 +219,7 @@
           <div class="observation-header">
             <div>
               <h3>Observation Table</h3>
-              <p class="observation-caption">Select lamp load, add the paired readings.</p>
-            </div>
-            <div class="live-readings">
-              <div class="reading-pill">
-                <span class="reading-label">Ammeter-1</span>
-                <span id="liveA1" class="reading-value">--</span>
-              </div>
-              <div class="reading-pill">
-                <span class="reading-label">Voltmeter-1</span>
-                <span id="liveV1" class="reading-value">--</span>
-              </div>
-              <div class="reading-pill">
-                <span class="reading-label">Ammeter-2</span>
-                <span id="liveA2" class="reading-value">--</span>
-              </div>
-              <div class="reading-pill">
-                <span class="reading-label">Voltmeter-2</span>
-                <span id="liveV2" class="reading-value">--</span>
-              </div>
+               
             </div>
           </div>
           <div class="observation-table-wrapper">
@@ -258,38 +240,24 @@
           </div>
         </section>
 
-        <!-- <section class="data-section">
-          <div class="data-table">
-            <div class="table-header">
-              <span>Sr No.</span><span>Current (A)</span><span>Voltage (V)</span>
-            </div>
-            <div class="table-row"><span></span><span></span><span></span></div>
-            <div class="table-row"><span></span><span></span><span></span></div>
-            <div class="table-row"><span></span><span></span><span></span></div>
-            <div class="table-row"><span></span><span></span><span></span></div>
-            <div class="table-row"><span></span><span></span><span></span></div>
-          </div>
-        </section> -->
+        
       </section>
-
-      <aside class="right-column">
-        <div class="pill-stack">
+       <div id="pill-stack">
           <button class="pill-btn">Instructions</button>
-          <button class="pill-btn">Check Connections</button>
+          <button class="pill-btn">Check</button>
           <button class="pill-btn">Speaking</button>
           <button class="pill-btn">Auto Connect</button>
           <button class="pill-btn">Add Table</button>
           <button class="pill-btn">Reset</button>
-          <button class="pill-btn">Print</button>
-          <button class="pill-btn">Report</button>
-          <button class="pill-btn">Graph</button>
-        </div>
-      </aside>
+       </div>
     </section>
 
     <section class="graph-section">
       <div class="graph-header">
         <h3>Output Graph</h3>
+           <button class="graph-pill-btn">Print</button>
+          <button class="graph-pill-btn">Report</button>
+          <button class="graph-pill-btn">Graph</button>
         <span class="graph-caption">Auto-generated from readings</span>
       </div>
       <div class="graph-canvas">
@@ -297,6 +265,83 @@
         <div id="graphPlot" class="graph-plot" aria-label="Voltage vs Current graph"></div>
       </div>
     </section>
+
+    <div id="instructionModal" class="instruction-overlay is-hidden" role="dialog" aria-modal="true" aria-label="Experiment instructions">
+      <div class="instruction-overlay__backdrop"></div>
+      <div class="instruction-dialog animate-fadeInUp">
+        <button type="button" class="instruction-close" aria-label="Close instructions">&times;</button>
+        <section class="vl-card p-6 instruction-body">
+          <div class="space-y-8 text-gray-700 text-lg leading-relaxed">
+            <div class="overflow-auto rounded-lg shadow border border-gray-200 instruction-table-wrapper">
+              <table class="min-w-[1100px] w-full table-fixed divide-y divide-gray-200">
+                <caption class="sr-only">Connections mapping between 'From' and 'To' terminals</caption>
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="sticky top-0 z-10 px-4 py-3 text-left text-sm font-semibold text-gray-700 bg-gray-50">From</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">R</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">R</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">B</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">B</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">A2</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">L</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">F</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">A</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">L2</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">A4</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">Z4</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">I</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">J</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">H</th>
+                    <th class="sticky top-0 z-10 px-3 py-3 text-center text-xs font-medium text-gray-600 uppercase">H</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100 text-sm">
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium text-gray-800 bg-gray-50">To</td>
+                    <td class="px-3 py-3 text-center">C</td>
+                    <td class="px-3 py-3 text-center">E</td>
+                    <td class="px-3 py-3 text-center">G</td>
+                    <td class="px-3 py-3 text-center">A2</td>
+                    <td class="px-3 py-3 text-center">Z2</td>
+                    <td class="px-3 py-3 text-center">D</td>
+                    <td class="px-3 py-3 text-center">Z1</td>
+                    <td class="px-3 py-3 text-center">A1</td>
+                    <td class="px-3 py-3 text-center">A4</td>
+                    <td class="px-3 py-3 text-center">Z4</td>
+                    <td class="px-3 py-3 text-center">K</td>
+                    <td class="px-3 py-3 text-center">J</td>
+                    <td class="px-3 py-3 text-center">L1</td>
+                    <td class="px-3 py-3 text-center">A3</td>
+                    <td class="px-3 py-3 text-center">Z3</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-3 text-xs text-gray-600 instruction-legend">
+              <span class="inline-block mr-4"><span class="inline-block w-3 h-3 bg-gray-100 mr-1 align-middle rounded-sm"></span>Terminals legend</span>
+              <span class="inline-block mr-4">&bull; <strong>From</strong> = source terminal</span>
+              <span class="inline-block">&bull; <strong>To</strong> = destination terminal</span>
+            </div>
+
+            <div class="flex justify-center my-8">
+              <img src="images/CorrectConnections.png" alt="Correct Connections Diagram" class="max-w-full h-auto rounded-lg shadow-lg instruction-image" style="max-height: 500px;">
+            </div>
+
+            <div class="space-y-4 instruction-steplist">
+              <p><strong>STEP 2:</strong> Click on <b>"Check"</b> Button for checking the connections.</p>
+              <p><strong>STEP 3:</strong> If connections are correct, MCB will be turned ON.</p>
+              <p><strong>STEP 4:</strong> Select the number of Bulbs from the Lamp load.</p>
+              <p><strong>STEP 5:</strong> Click on <b>"Add"</b> Button to add the values to the Observation Table.</p>
+              <p><strong>STEP 6:</strong> Add different values to the Table by increasing the lamp load.</p>
+              <p><strong>STEP 7:</strong> Click on <b>"Graph"</b> Button to create the graph.</p>
+              <p><strong>STEP 8:</strong> Click on <b>"Print"</b> Button to print the webpage.</p>
+              <p><strong>STEP 9:</strong> Click on <b>"Reset"</b> Button to reset the webpage.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   </main>
 </body>
 

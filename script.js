@@ -118,6 +118,13 @@ const sharedControls = {
   starterHandle: null
 };
 
+function findButtonByLabel(label) {
+  if (!label) return null;
+  const target = label.trim().toLowerCase();
+  const buttons = document.querySelectorAll(".pill-btn, .graph-pill-btn");
+  return Array.from(buttons).find(btn => btn.textContent.trim().toLowerCase() === target) || null;
+}
+
 jsPlumb.ready(function () {
   const ringSvg =
     'data:image/svg+xml;utf8,' +
@@ -533,8 +540,7 @@ jsPlumb.ready(function () {
   });
 
   // Check button - Robust selection by text content (no ID needed)
-  const checkBtns = document.querySelectorAll('.pill-btn');
-  const checkBtn = Array.from(checkBtns).find(btn => btn.textContent.trim() === 'Check Connections');
+  const checkBtn = findButtonByLabel("Check") || findButtonByLabel("Check Connections");
   if (checkBtn) {
     console.log("Check button found and wired."); // Debug log
     checkBtn.addEventListener("click", function () {
@@ -583,11 +589,11 @@ jsPlumb.ready(function () {
       if (addBtn) addBtn.disabled = true;
     });
   } else {
-    console.error("Check button not found! Looking for '.pill-btn' with text 'Check Connections'. Add it or check HTML.");
+    console.error("Check button not found! Looking for a control labeled 'Check' or 'Check Connections'. Add it or check HTML.");
   }
 
   // Auto Connect button - creates all required connections automatically
-  const autoConnectBtn = Array.from(checkBtns).find(btn => btn.textContent.trim() === 'Auto Connect');
+  const autoConnectBtn = findButtonByLabel("Auto Connect");
   if (autoConnectBtn) {
     autoConnectBtn.addEventListener("click", function () {
       const runBatch = typeof jsPlumb.batch === "function" ? jsPlumb.batch.bind(jsPlumb) : (fn => fn());
@@ -693,10 +699,10 @@ jsPlumb.ready(function () {
   const graphPlot = document.getElementById("graphPlot");
   const graphSection = document.querySelector(".graph-section");
 
-  const pills = Array.from(document.querySelectorAll(".pill-btn"));
-  const addTableBtn = pills.find((btn) => btn.textContent.trim() === "Add Table");
-  const graphBtn = pills.find((btn) => btn.textContent.trim() === "Graph");
-  const resetBtn = pills.find((btn) => btn.textContent.trim() === "Reset");
+  const addTableBtn = findButtonByLabel("Add Table") || findButtonByLabel("Add");
+  const graphBtn = findButtonByLabel("Graph");
+  const resetBtn = findButtonByLabel("Reset");
+  const printBtn = findButtonByLabel("Print");
 
   const needle1 = document.querySelector(".meter-needle1");
   const needle2 = document.querySelector(".meter-needle2");
@@ -908,6 +914,16 @@ jsPlumb.ready(function () {
   }
 
   function resetObservations() {
+    if (window.jsPlumb) {
+      if (typeof jsPlumb.deleteEveryConnection === "function") {
+        jsPlumb.deleteEveryConnection();
+      } else if (typeof jsPlumb.getAllConnections === "function") {
+        jsPlumb.getAllConnections().forEach(c => jsPlumb.deleteConnection(c));
+      }
+      if (typeof jsPlumb.repaintEverything === "function") {
+        jsPlumb.repaintEverything();
+      }
+    }
     readingsRecorded.length = 0;
     if (observationBody) {
       observationBody.innerHTML = `<tr class="placeholder-row"><td colspan="3">No readings added yet.</td></tr>`;
@@ -959,6 +975,10 @@ jsPlumb.ready(function () {
     resetBtn.addEventListener("click", resetObservations);
   }
 
+  if (printBtn) {
+    printBtn.addEventListener("click", () => window.print());
+  }
+
   window.addEventListener(MCB_TURNED_OFF_EVENT, function () {
     selectedIndex = -1;
     if (lampSelect) {
@@ -986,5 +1006,31 @@ jsPlumb.ready(function () {
     sharedControls.setMcbState(false, { silent: true });
     sharedControls.updateControlLocks();
     stepGuide.complete("connect");
+  });
+})();
+
+(function initInstructionModal() {
+  const modal = document.getElementById("instructionModal");
+  if (!modal) return;
+
+  const closeBtn = modal.querySelector(".instruction-close");
+  const backdrop = modal.querySelector(".instruction-overlay__backdrop");
+  const openBtn = findButtonByLabel("Instructions");
+
+  function openModal() {
+    modal.classList.remove("is-hidden");
+  }
+
+  function closeModal() {
+    modal.classList.add("is-hidden");
+  }
+
+  openBtn?.addEventListener("click", openModal);
+  closeBtn?.addEventListener("click", closeModal);
+  backdrop?.addEventListener("click", closeModal);
+  document.addEventListener("keydown", (evt) => {
+    if (evt.key === "Escape" && !modal.classList.contains("is-hidden")) {
+      closeModal();
+    }
   });
 })();
