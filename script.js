@@ -3,6 +3,15 @@ let starterMoved = false;
 let mcbOn = false;
 const CONNECTION_VERIFIED_EVENT = "connections-verified";
 const MCB_TURNED_OFF_EVENT = "mcb-turned-off";
+const WIRE_CURVINESS = -50;
+
+const generatorRotor = document.querySelector(".generator-rotor");
+
+function updateRotorSpin() {
+  if (!generatorRotor) return;
+  const shouldSpin = connectionsVerified && mcbOn && starterMoved;
+  generatorRotor.classList.toggle("spinning", shouldSpin);
+}
 
 // Step-by-step helper popups
 const stepGuide = (() => {
@@ -135,13 +144,17 @@ jsPlumb.ready(function () {
         <circle cx="13" cy="13" r="6" fill="black"/>
       </svg>
     `);
+  // keep defaults aligned with the legacy curvy wires
+  jsPlumb.importDefaults({
+    Connector: ["Bezier", { curviness: WIRE_CURVINESS }]
+  });
   // Base endpoint options (no connectorStyle here; we'll set per-endpoint dynamically)
   const baseEndpointOptions = {
     endpoint: ["Image", { url: ringSvg, width: 26, height: 26 }],
     isSource: true,
     isTarget: true,
     maxConnections: -1,
-    connector: ["Bezier", { curviness: 60 }]
+    connector: ["Bezier", { curviness: WIRE_CURVINESS }]
   };
   const container = document.querySelector(".top-row");
   if (container) {
@@ -315,7 +328,7 @@ jsPlumb.ready(function () {
     const connectionParams = {
       sourceEndpoint,
       targetEndpoint,
-      connector: ["Bezier", { curviness: 60 }],
+      connector: ["Bezier", { curviness: WIRE_CURVINESS }],
       paintStyle: { stroke: wireColor, strokeWidth: 4 }
     };
 
@@ -342,6 +355,7 @@ jsPlumb.ready(function () {
     const sourceAnchor = anchors[sourceId];
     const isLeftSide = sourceAnchor && sourceAnchor[0] === 0; // x=0 is left side
     const wireColor = isLeftSide ? "blue" : "red";
+    info.connection.setConnector(["Bezier", { curviness: WIRE_CURVINESS }]);
     info.connection.setPaintStyle({ stroke: wireColor, strokeWidth: 4 });
     console.log(`Wire from ${sourceId} set to ${wireColor}`); // Debug log (remove if not needed)
   });
@@ -431,6 +445,7 @@ jsPlumb.ready(function () {
     }
     starterHandle.style.cursor = (connectionsVerified && mcbOn && !starterMoved) ? 'grab' : 'default';
     updateControlLocks();
+    updateRotorSpin();
     e.preventDefault();
   }
 
@@ -464,6 +479,7 @@ jsPlumb.ready(function () {
     if (lampSelect) lampSelect.disabled = !ready;
     if (addBtn) addBtn.disabled = !ready;
     updateStarterUI();
+    updateRotorSpin();
   }
 
   function setMcbState(isOn, options = {}) {
@@ -488,6 +504,7 @@ jsPlumb.ready(function () {
       return;
     }
     updateControlLocks();
+    updateRotorSpin();
   }
 
   sharedControls.updateControlLocks = updateControlLocks;
@@ -949,6 +966,7 @@ jsPlumb.ready(function () {
       starter.classList.remove('moved');
     }
     sharedControls.updateControlLocks();
+    updateRotorSpin();
     stepGuide.reset();
   }
 
@@ -1005,6 +1023,7 @@ jsPlumb.ready(function () {
     mcbOn = false;
     sharedControls.setMcbState(false, { silent: true });
     sharedControls.updateControlLocks();
+    updateRotorSpin();
     stepGuide.complete("connect");
   });
 })();

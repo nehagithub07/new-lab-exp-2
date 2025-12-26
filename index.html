@@ -60,6 +60,7 @@
            </select>
         </div>
         <div class="lamp-board">
+          
           <div class="lamp-grid">
             <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
             <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
@@ -72,6 +73,7 @@
             <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
             <img class="lamp-bulb off" src="images/off-bulb.png" alt="Lamp off">
           </div>
+          <h3 class="lamp-load-label">Lamp Load</h3>
            <div>
             <button class="point-L1">L1</button>
             <div id="pointL1" class="point"></div>   
@@ -158,7 +160,7 @@
             </div>
           </div>
         </div>
-
+         
         <div class="workspace">
           
           <div class="equipment-row">
@@ -167,7 +169,9 @@
              
               <div class="motor-box">
                 <img src="images/shuntmotor.png" alt="Motor">
-                
+                <h3 class="dc-motor-label">
+                  DC Motor
+                </h3>
                 <div>
                   <button class="point-A1">A1</button>
                   <button class="point-Z1">Z1</button>
@@ -242,8 +246,8 @@
 
         
       </section>
-       <div id="pill-stack">
-          <button class="pill-btn">Instructions</button>
+      <div id="pill-stack">
+         <button class="pill-btn">Instructions</button>
           <button class="pill-btn">Check</button>
           <button class="pill-btn">Speaking</button>
           <button class="pill-btn">Auto Connect</button>
@@ -252,20 +256,7 @@
        </div>
     </section>
 
-    <section class="graph-section">
-      <div class="graph-header">
-        <h3>Output Graph</h3>
-           <button class="graph-pill-btn">Print</button>
-          <button class="graph-pill-btn">Report</button>
-          <button class="graph-pill-btn">Graph</button>
-        <span class="graph-caption">Auto-generated from readings</span>
-      </div>
-      <div class="graph-canvas">
-        <div class="graph-bars" id="graphBars"></div>
-        <div id="graphPlot" class="graph-plot" aria-label="Voltage vs Current graph"></div>
-      </div>
-    </section>
-
+  
     <div id="instructionModal" class="instruction-overlay is-hidden" role="dialog" aria-modal="true" aria-label="Experiment instructions">
       <div class="instruction-overlay__backdrop"></div>
       <div class="instruction-dialog animate-fadeInUp">
@@ -342,7 +333,23 @@
         </section>
       </div>
     </div>
-  </main>
+  </main>  
+
+  <footer class="panel-footer">
+    <section class="graph-section">
+      <div class="graph-header">
+        <h3>Output Graph</h3>
+        <button class="graph-pill-btn">Print</button>
+        <button class="graph-pill-btn">Report</button>
+        <button class="graph-pill-btn">Graph</button>
+        <span class="graph-caption">Auto-generated from readings</span>
+      </div>
+      <div class="graph-canvas">
+        <div class="graph-bars" id="graphBars"></div>
+        <div id="graphPlot" class="graph-plot" aria-label="Voltage vs Current graph"></div>
+      </div>
+    </section>
+  </footer>
 </body>
 
 <script src="script.js"></script>
