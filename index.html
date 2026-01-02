@@ -102,11 +102,12 @@
                 <div class="meter-needle1">
                   <img src="images/needle.png" alt="needle">
                 </div>
+                <div id="liveA1" class="meter-reading" aria-live="polite">--</div>
                 <div>
                     <button class="point-C">C</button>
                    <button class="point-D">D</button>
-                    
-                   <div id="pointC" class="point"></div>
+                     
+                    <div id="pointC" class="point"></div>
                    <div id="pointD" class="point"></div>
                    
                 </div>
@@ -117,11 +118,12 @@
                 <div class="meter-needle3">
                   <img src="images/needle.png" alt="needle">
                 </div>
-               
+                <div id="liveV1" class="meter-reading" aria-live="polite">--</div>
+                
                 <div>
                    <button class="point-E">E</button>
                    <button class="point-G">G</button>
-                    
+                     
                    <div id="pointE" class="point"></div>
                    <div id="pointG" class="point"></div>
                    
@@ -133,10 +135,11 @@
                 <div class="meter-needle2">
                   <img src="images/needle.png" alt="needle">
                 </div>
+                <div id="liveA2" class="meter-reading" aria-live="polite">--</div>
                  <div>
-                   <button class="point-H">H</button>
-                   <button class="point-I">I</button>
-                    
+                    <button class="point-H">H</button>
+                    <button class="point-I">I</button>
+                     
                    <div id="pointH" class="point"></div>
                    <div id="pointI" class="point"></div>
                    
@@ -148,10 +151,11 @@
                 <div class="meter-needle4">
                   <img src="images/needle.png" alt="needle">
                 </div>
+                <div id="liveV2" class="meter-reading" aria-live="polite">--</div>
                  <div>
-                   <button class="point-J">J</button>
-                   <button class="point-K">K</button>
-                    
+                    <button class="point-J">J</button>
+                    <button class="point-K">K</button>
+                     
                    <div id="pointJ" class="point"></div>
                    <div id="pointK" class="point"></div>
                    
@@ -247,7 +251,31 @@
         
       </section>
       <div id="pill-stack">
-         <button class="pill-btn">Instructions</button>
+         <div class="instructions-wrapper">
+           <button class="pill-btn instructions-btn" type="button">Instructions</button>
+           <div class="instructions-panel" role="note" aria-label="Experiment instructions preview">
+             <h4>STEP 1: Make connections as per instructions below:</h4>
+             <table class="conn-table">
+               <tr>
+                 <th>From</th>
+                 <td>R</td><td>R</td><td>B</td><td>B</td><td>A2</td><td>L</td><td>F</td><td>A</td><td>L2</td><td>A4</td><td>Z4</td><td>I</td><td>J</td><td>H</td><td>H</td>
+               </tr>
+               <tr>
+                 <th>To</th>
+                 <td>C</td><td>E</td><td>G</td><td>A2</td><td>Z2</td><td>D</td><td>Z1</td><td>A1</td><td>A4</td><td>Z4</td><td>K</td><td>J</td><td>L1</td><td>A3</td><td>Z3</td>
+               </tr>
+             </table>
+ 
+             <p><strong>STEP 2:</strong> Click on <b>"Check"</b> Button for checking the connections.</p>
+             <p><strong>STEP 3:</strong> If connections are correct, MCB will be turned ON.</p>
+             <p><strong>STEP 4:</strong> Select the number of Bulbs from the Lamp load.</p>
+             <p><strong>STEP 5:</strong> Click on <b>"Add"</b> Button to add the values to the Observation Table.</p>
+             <p><strong>STEP 6:</strong> Add different values to the Table by increasing the lamp load.</p>
+             <p><strong>STEP 7:</strong> Click on <b>"Graph"</b> Button to create the graph.</p>
+             <p><strong>STEP 8:</strong> Click on <b>"Print"</b> Button to print the webpage.</p>
+             <p><strong>STEP 9:</strong> Click on <b>"Reset"</b> Button to reset the webpage.</p>
+           </div>
+         </div>
           <button class="pill-btn">Check</button>
           <button class="pill-btn">Speaking</button>
           <button class="pill-btn">Auto Connect</button>

@@ -655,6 +655,279 @@ jsPlumb.ready(function () {
     console.error("Auto Connect button not found! Looking for '.pill-btn' with text 'Auto Connect'.");
   }
 
+  // Speaking button - guided voice prompts for wiring
+  (function initSpeakingGuidance() {
+    const speakingBtn = findButtonByLabel("Speaking") || findButtonByLabel("Start Speaking");
+    if (!speakingBtn) return;
+
+    const speechSupported =
+      typeof window !== "undefined" &&
+      "speechSynthesis" in window &&
+      typeof window.SpeechSynthesisUtterance === "function";
+
+    const originalLabel = speakingBtn.textContent;
+    const highlightClass = "speak-glow";
+
+    if (!speechSupported) {
+      speakingBtn.disabled = true;
+      speakingBtn.title = "Speech synthesis is not available in this browser.";
+      return;
+    }
+
+    let speakingActive = false;
+    let voicesReady = false;
+    let speechPrimed = false;
+    let speechQueue = Promise.resolve();
+    let currentPromptIndex = -1;
+
+    function getTerminalLabel(pointId) {
+      return String(pointId || "").replace(/^point/i, "");
+    }
+
+    function clearHighlights() {
+      document.querySelectorAll(`.${highlightClass}`).forEach((el) => {
+        el.classList.remove(highlightClass);
+      });
+    }
+
+    function highlightTerminals(pointIds) {
+      clearHighlights();
+      pointIds.forEach((pointId) => {
+        const label = getTerminalLabel(pointId);
+        const pointEl = document.getElementById(pointId);
+        if (pointEl) pointEl.classList.add(highlightClass);
+        const btnEl = document.querySelector(`.point-${label}`);
+        if (btnEl) btnEl.classList.add(highlightClass);
+      });
+    }
+
+    function ensureVoicesReady() {
+      if (voicesReady) return Promise.resolve();
+      return new Promise((resolve) => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length) {
+          voicesReady = true;
+          resolve();
+          return;
+        }
+        let done = false;
+        const cleanup = () => {
+          if (typeof window.speechSynthesis.removeEventListener === "function") {
+            window.speechSynthesis.removeEventListener("voiceschanged", onChanged);
+          } else if (window.speechSynthesis.onvoiceschanged === onChanged) {
+            window.speechSynthesis.onvoiceschanged = null;
+          }
+        };
+        const finish = () => {
+          if (done) return;
+          done = true;
+          voicesReady = true;
+          cleanup();
+          resolve();
+        };
+        const onChanged = () => finish();
+        if (typeof window.speechSynthesis.addEventListener === "function") {
+          window.speechSynthesis.addEventListener("voiceschanged", onChanged);
+        } else {
+          window.speechSynthesis.onvoiceschanged = onChanged;
+        }
+        setTimeout(finish, 700);
+      });
+    }
+
+    function pickVoice() {
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices || !voices.length) return null;
+      return (
+        voices.find((v) => (v.lang || "").toLowerCase().startsWith("en") && !/google/i.test(v.name)) ||
+        voices.find((v) => (v.lang || "").toLowerCase().startsWith("en")) ||
+        voices[0]
+      );
+    }
+
+    function stopSpeechOutput() {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (_) {
+        // no-op
+      }
+    }
+
+    function speakOnce(text, { interrupt = false } = {}) {
+      if (!text) return Promise.resolve();
+      return ensureVoicesReady().then(() => {
+        if (interrupt) stopSpeechOutput();
+        return new Promise((resolve) => {
+          const utterance = new SpeechSynthesisUtterance(String(text));
+          const voice = pickVoice();
+          if (voice) utterance.voice = voice;
+          utterance.rate = 0.95;
+          utterance.pitch = 1;
+          utterance.onend = () => resolve();
+          utterance.onerror = () => resolve();
+          window.speechSynthesis.speak(utterance);
+        });
+      });
+    }
+
+    function queueSpeech(lines, { interruptFirst = true } = {}) {
+      const list = Array.isArray(lines) ? lines.filter(Boolean) : [];
+      if (!list.length) return Promise.resolve();
+      speechQueue = speechQueue.then(() => {
+        if (interruptFirst) stopSpeechOutput();
+        const run = (idx) => {
+          if (idx >= list.length) return Promise.resolve();
+          return speakOnce(list[idx], { interrupt: idx === 0 && interruptFirst }).then(() => run(idx + 1));
+        };
+        return run(0);
+      });
+      return speechQueue;
+    }
+
+    function primeSpeechEngine() {
+      if (speechPrimed) return Promise.resolve();
+      return ensureVoicesReady().then(
+        () =>
+          new Promise((resolve) => {
+            const primer = new SpeechSynthesisUtterance(".");
+            primer.volume = 0;
+            primer.onend = () => resolve();
+            primer.onerror = () => resolve();
+            window.speechSynthesis.speak(primer);
+          })
+      ).then(() => {
+        speechPrimed = true;
+      });
+    }
+
+    function getNextMissingIndex() {
+      const seen = getSeenConnectionKeys();
+      for (let i = 0; i < requiredPairs.length; i += 1) {
+        const [a, b] = requiredPairs[i].split("-");
+        if (!a || !b) continue;
+        if (!seen.has(connectionKey(a, b))) return i;
+      }
+      return -1;
+    }
+
+    function promptNext({ forceSpeak = false } = {}) {
+      if (!speakingActive) return;
+
+      const idx = getNextMissingIndex();
+      if (idx < 0) {
+        clearHighlights();
+        if (currentPromptIndex !== -2 || forceSpeak) {
+          currentPromptIndex = -2;
+          queueSpeech(
+            [
+              "All connections are complete.",
+              "Now click the Check button to verify the connections.",
+              "If the connections are correct, click the M C B to turn it on, then move the starter handle.",
+              "Select the number of bulbs and press Add Table to record readings.",
+              "After adding at least six readings, press Graph to plot the curve."
+            ],
+            { interruptFirst: true }
+          );
+        }
+        return;
+      }
+
+      const [a, b] = requiredPairs[idx].split("-");
+      highlightTerminals([a, b]);
+
+      if (forceSpeak || idx !== currentPromptIndex) {
+        currentPromptIndex = idx;
+        const from = getTerminalLabel(a);
+        const to = getTerminalLabel(b);
+        queueSpeech([`Please connect ${from} to ${to}.`], { interruptFirst: true });
+      }
+    }
+
+    function setSpeakingUiState(active) {
+      speakingBtn.textContent = active ? "Stop Speaking" : originalLabel;
+      speakingBtn.setAttribute("aria-pressed", active ? "true" : "false");
+    }
+
+    function startSpeaking() {
+      if (speakingActive) return;
+      speakingActive = true;
+      currentPromptIndex = -1;
+      setSpeakingUiState(true);
+
+      // Avoid mixed modes: auto connect fights with guided prompts.
+      if (autoConnectBtn) autoConnectBtn.disabled = true;
+
+      speechQueue = Promise.resolve();
+      stopSpeechOutput();
+      primeSpeechEngine().finally(() => {
+        queueSpeech(["Guided speaking started. Follow the highlighted terminals."], { interruptFirst: true }).finally(() => {
+          promptNext({ forceSpeak: true });
+        });
+      });
+    }
+
+    function stopSpeaking() {
+      speakingActive = false;
+      setSpeakingUiState(false);
+      if (autoConnectBtn) autoConnectBtn.disabled = false;
+      clearHighlights();
+      stopSpeechOutput();
+      speechQueue = Promise.resolve();
+      currentPromptIndex = -1;
+    }
+
+    speakingBtn.addEventListener("click", () => {
+      if (speakingActive) stopSpeaking();
+      else startSpeaking();
+    });
+
+    // React to new connections while guidance is active.
+    jsPlumb.bind("connection", function (info) {
+      if (!speakingActive) return;
+
+      const key = connectionKey(info.sourceId, info.targetId);
+      if (!requiredConnections.has(key)) {
+        // Not part of the wiring plan: remove it and re-prompt.
+        if (info.connection) {
+          jsPlumb.deleteConnection(info.connection);
+          jsPlumb.repaintEverything();
+        }
+        const nextIdx = getNextMissingIndex();
+        if (nextIdx >= 0) {
+          const [a, b] = requiredPairs[nextIdx].split("-");
+          highlightTerminals([a, b]);
+          queueSpeech([`Wrong connection. Please connect ${getTerminalLabel(a)} to ${getTerminalLabel(b)}.`], {
+            interruptFirst: true
+          });
+        }
+        return;
+      }
+
+      // Correct/allowed connection: move on (skips any already-connected steps).
+      promptNext();
+    });
+
+    // If a required wire is removed during guidance, keep the prompt aligned.
+    jsPlumb.bind("connectionDetached", function () {
+      if (!speakingActive) return;
+      promptNext({ forceSpeak: false });
+    });
+
+    // Reset should always stop speech and clear highlights.
+    const resetBtn = findButtonByLabel("Reset");
+    resetBtn?.addEventListener("click", stopSpeaking);
+
+    window.addEventListener(CONNECTION_VERIFIED_EVENT, function () {
+      if (!speakingActive) return;
+      queueSpeech(["Connections verified. Click the M C B to turn it on."], { interruptFirst: true });
+    });
+
+    window.addEventListener(MCB_TURNED_OFF_EVENT, function () {
+      if (!speakingActive) return;
+      queueSpeech(["M C B is turned off. Turn it on to continue."], { interruptFirst: true });
+    });
+  })();
+
   // Lock every point to its initial coordinates so resizing the window cannot drift them
   const pinnedSelectors = [
     ".point",
@@ -768,7 +1041,8 @@ jsPlumb.ready(function () {
   }
 
   function currentToAngle(currentValue, maxCurrent = 20) {
-    const minAngle = -74; // aligns with legacy ammeter artwork
+    // Ammeter artwork scale: 0–20 A
+    const minAngle = -74;
     const maxAngle = 74;
     const safeValue = clamp(currentValue, 0, maxCurrent);
     const ratio = safeValue / maxCurrent;
@@ -776,8 +1050,9 @@ jsPlumb.ready(function () {
   }
 
   function voltageToAngle(voltageValue) {
-    const minAngle = -63; // from legacy voltmeter mapping (0 V)
-    const maxAngle = 63;  // 240 V
+    // Voltmeter artwork scale: 0–240 V
+    const minAngle = -63;
+    const maxAngle = 63;
     const safeVoltage = clamp(voltageValue, 0, 240);
     const ratio = safeVoltage / 240;
     return minAngle + (maxAngle - minAngle) * ratio;
@@ -812,10 +1087,11 @@ jsPlumb.ready(function () {
 
   function updateNeedles(idx) {
     if (idx < 0) {
-      setNeedleRotation(needle1, -74);
-      setNeedleRotation(needle2, -74);
-      setNeedleRotation(needle3, -63);
-      setNeedleRotation(needle4, -63);
+      // park needles at 0 reading
+      setNeedleRotation(needle1, currentToAngle(0));
+      setNeedleRotation(needle2, currentToAngle(0));
+      setNeedleRotation(needle3, voltageToAngle(0));
+      setNeedleRotation(needle4, voltageToAngle(0));
       return;
     }
     setNeedleRotation(needle1, currentToAngle(ammeter1Readings[idx]));
