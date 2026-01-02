@@ -134,7 +134,10 @@ function findButtonByLabel(label) {
   return Array.from(buttons).find(btn => btn.textContent.trim().toLowerCase() === target) || null;
 }
 
-jsPlumb.ready(function () {
+if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
+  console.error("jsPlumb is not loaded. Connection wiring is disabled.");
+} else {
+  jsPlumb.ready(function () {
   const ringSvg =
     'data:image/svg+xml;utf8,' +
     encodeURIComponent(`
@@ -976,7 +979,8 @@ jsPlumb.ready(function () {
     window.addEventListener("load", initPinnedPoints);
   }
   window.addEventListener("resize", lockPointsToBase);
-});
+  });
+}
 
 // -----------------------------------------------
 // Observation table + meter needle interactions
@@ -1072,7 +1076,7 @@ jsPlumb.ready(function () {
     const minAngle = -74;
     const maxAngle = 74;
     const maxVoltage = 410;
-    const midVoltage = 240;
+    const midVoltage = 180;
     const safeVoltage = clamp(voltageValue, 0, maxVoltage);
     if (safeVoltage <= midVoltage) {
       const t = safeVoltage / midVoltage;
@@ -1652,27 +1656,6 @@ tr:nth-child(even) { background-color: #f8fbff; }
     const tooltipText = tooltipLayer.querySelector(".hover-tooltip__text");
     document.body.appendChild(tooltipLayer);
 
-    const TOOLTIP_SEEN_KEY = "vlab-exp2-hover-tooltips-seen-v1";
-    const seenIds = (() => {
-      try {
-        const raw = sessionStorage.getItem(TOOLTIP_SEEN_KEY);
-        const parsed = raw ? JSON.parse(raw) : [];
-        return new Set(Array.isArray(parsed) ? parsed : []);
-      } catch {
-        return new Set();
-      }
-    })();
-
-    function markSeen(id) {
-      if (!id) return;
-      seenIds.add(id);
-      try {
-        sessionStorage.setItem(TOOLTIP_SEEN_KEY, JSON.stringify(Array.from(seenIds)));
-      } catch {
-        // ignore storage errors
-      }
-    }
-
     const tooltips = [
       {
         id: "mcb",
@@ -1790,11 +1773,9 @@ tr:nth-child(even) { background-color: #f8fbff; }
     document.addEventListener("mouseover", function (event) {
       const found = findEntry(event.target);
       if (!found) return;
-      if (found.id && seenIds.has(found.id)) return;
       if (activeTarget === found.match) return;
       activeTarget = found.match;
       showTip(found.text, event);
-      markSeen(found.id);
     });
 
     document.addEventListener("mousemove", function (event) {
@@ -1806,6 +1787,96 @@ tr:nth-child(even) { background-color: #f8fbff; }
       if (event.relatedTarget && activeTarget.contains(event.relatedTarget)) return;
       activeTarget = null;
       hideTip();
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setup, { once: true });
+  } else {
+    setup();
+  }
+})();
+
+(function initChatbotWidget() {
+  function setup() {
+    const widget = document.querySelector(".chatbot-widget");
+    if (!widget) return;
+
+    const toggleBtn = widget.querySelector(".chatbot-launcher");
+    const panel = widget.querySelector(".chatbot-panel");
+    const closeBtn = widget.querySelector(".chatbot-panel-close");
+    const iframe = panel?.querySelector("iframe");
+    const placeholder = panel?.querySelector(".chatbot-panel-placeholder");
+    const chatUrl = (panel?.dataset?.chatUrl || "").trim();
+    const notifyAudio = document.getElementById("chatbot-notification-audio");
+
+    if (!toggleBtn || !panel || !closeBtn || !iframe || !placeholder) return;
+
+    let isLoaded = false;
+    let notifiedOnce = false;
+
+    function openPanel() {
+      panel.classList.add("open");
+      widget.classList.add("chatbot-open");
+      toggleBtn.setAttribute("aria-expanded", "true");
+
+      if (chatUrl && chatUrl !== "#") {
+        if (!isLoaded) {
+          placeholder.style.display = "flex";
+          placeholder.textContent = "Loading assistant...";
+
+          iframe.addEventListener(
+            "load",
+            () => {
+              isLoaded = true;
+              iframe.classList.add("chatbot-frame-visible");
+              placeholder.style.display = "none";
+            },
+            { once: true }
+          );
+
+          iframe.src = chatUrl;
+        }
+      } else {
+        placeholder.style.display = "flex";
+        placeholder.innerHTML =
+          'Set the <strong>data-chat-url</strong> on the chatbot panel to your chatbot link.';
+      }
+
+      if (!notifiedOnce && notifyAudio) {
+        notifiedOnce = true;
+        try {
+          notifyAudio.currentTime = 0;
+          const playResult = notifyAudio.play();
+          if (playResult && typeof playResult.catch === "function") {
+            playResult.catch(() => {});
+          }
+        } catch {
+          // ignore playback errors (autoplay restrictions)
+        }
+      }
+    }
+
+    function closePanel() {
+      panel.classList.remove("open");
+      widget.classList.remove("chatbot-open");
+      toggleBtn.setAttribute("aria-expanded", "false");
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      if (panel.classList.contains("open")) {
+        closePanel();
+      } else {
+        openPanel();
+      }
+    });
+
+    closeBtn.addEventListener("click", closePanel);
+
+    document.addEventListener("keydown", (evt) => {
+      if (evt.key === "Escape" && panel.classList.contains("open")) {
+        closePanel();
+      }
     });
   }
 

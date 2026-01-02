@@ -602,7 +602,7 @@ h3 {
   margin-top: 40px;
   position: absolute;
   top: -35px;
-  left: 10px;
+  left: 38px;
   grid-row: 2;
   letter-spacing: 0.08em;
   font-size: clamp(0.88rem, 0.5vw, 0.89rem);
