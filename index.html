@@ -174,7 +174,7 @@
               <div class="motor-box">
                 <img src="images/shuntmotor.png" alt="Motor">
                 <h3 class="dc-motor-label">
-                  DC Motor
+                  DC Shunt Motor
                 </h3>
                 <div>
                   <button class="point-A1">A1</button>
@@ -201,7 +201,9 @@
               <div class="generator-box">
                 <img class="generator-body" src="images/Rotor-body.png" alt="Rotor body">
                 <img class="generator-rotor" id="gr" src="images/Generator-Rotor.png" alt="Generator rotor">               
-              
+                <h3 class="dc-generator-label">
+                  DC Shunt Generator
+                </h3>
                   <div>
                      <button class="point-A3">A3</button>
                      <button class="point-Z3">Z3</button>
@@ -269,18 +271,19 @@
              <p><strong>STEP 2:</strong> Click on <b>"Check"</b> Button for checking the connections.</p>
              <p><strong>STEP 3:</strong> If connections are correct, MCB will be turned ON.</p>
              <p><strong>STEP 4:</strong> Select the number of Bulbs from the Lamp load.</p>
-             <p><strong>STEP 5:</strong> Click on <b>"Add"</b> Button to add the values to the Observation Table.</p>
+             <p><strong>STEP 5:</strong> Click on <b>"Add To Table"</b> Button to add the values to the Observation Table.</p>
              <p><strong>STEP 6:</strong> Add different values to the Table by increasing the lamp load.</p>
              <p><strong>STEP 7:</strong> Click on <b>"Graph"</b> Button to create the graph.</p>
              <p><strong>STEP 8:</strong> Click on <b>"Print"</b> Button to print the webpage.</p>
              <p><strong>STEP 9:</strong> Click on <b>"Reset"</b> Button to reset the webpage.</p>
            </div>
          </div>
-          <button class="pill-btn">Check</button>
-          <button class="pill-btn">Speaking</button>
-          <button class="pill-btn">Auto Connect</button>
-          <button class="pill-btn">Add Table</button>
-          <button class="pill-btn">Reset</button>
+         <button class="pill-btn" type="button">Start Speaking</button>
+          <button class="pill-btn" type="button">Check</button>
+          
+          <button class="pill-btn" type="button">Auto Connect</button>
+          <button class="pill-btn" type="button">Add To Table</button>
+          <button class="pill-btn" type="button">Reset</button>
        </div>
     </section>
 
@@ -351,7 +354,7 @@
               <p><strong>STEP 2:</strong> Click on <b>"Check"</b> Button for checking the connections.</p>
               <p><strong>STEP 3:</strong> If connections are correct, MCB will be turned ON.</p>
               <p><strong>STEP 4:</strong> Select the number of Bulbs from the Lamp load.</p>
-              <p><strong>STEP 5:</strong> Click on <b>"Add"</b> Button to add the values to the Observation Table.</p>
+              <p><strong>STEP 5:</strong> Click on <b>"Add To Table"</b> Button to add the values to the Observation Table.</p>
               <p><strong>STEP 6:</strong> Add different values to the Table by increasing the lamp load.</p>
               <p><strong>STEP 7:</strong> Click on <b>"Graph"</b> Button to create the graph.</p>
               <p><strong>STEP 8:</strong> Click on <b>"Print"</b> Button to print the webpage.</p>
@@ -366,11 +369,14 @@
   <footer class="panel-footer">
     <section class="graph-section">
       <div class="graph-header">
-        <h3>Output Graph</h3>
-        <button class="graph-pill-btn">Print</button>
-        <button class="graph-pill-btn">Report</button>
-        <button class="graph-pill-btn">Graph</button>
-        <span class="graph-caption">Auto-generated from readings</span>
+        <div class="graph-title">
+          <h3>Output Graph</h3>
+        </div>
+        <div class="graph-actions">
+          <button class="graph-pill-btn" type="button">Graph</button>
+          <button class="graph-pill-btn" type="button">Report</button>
+          <button class="graph-pill-btn" type="button">Print</button>
+        </div>
       </div>
       <div class="graph-canvas">
         <div class="graph-bars" id="graphBars"></div>
@@ -378,6 +384,39 @@
       </div>
     </section>
   </footer>
+
+  <div class="chatbot-widget">
+    <div class="chatbot-panel" data-chat-url="https://vlab-chatbot-exp2.vercel.app/">
+      <div class="chatbot-panel-header">
+        <div>
+          <p class="chatbot-panel-title">Virtual Lab Assistant</p>
+          <p class="chatbot-panel-caption">Ask anything about this experiment</p>
+        </div>
+        <button type="button" class="chatbot-panel-close" aria-label="Close chatbot">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="chatbot-panel-body">
+        <div class="chatbot-panel-placeholder">Loading area for your chatbot. Update the <strong>data-chat-url</strong> to match your deployment.</div>
+        <iframe title="Chatbot assistant" referrerpolicy="no-referrer" scrolling="no"></iframe>
+      </div>
+    </div>
+
+    <button type="button" class="chatbot-launcher" aria-expanded="false" aria-label="Open chatbot assistant">
+      <span class="chatbot-hint-bubble">
+        <span class="chatbot-hint-dot">Hi</span>
+        Ask anything about this experiment
+      </span>
+      <img src="images/chatbot.png" alt="" aria-hidden="true" class="chatbot-launcher-image">
+    </button>
+  </div>
+
+  <audio id="chatbot-notification-audio" preload="auto">
+    <source src="live-chat-353605.mp3" type="audio/mpeg">
+  </audio>
 </body>
 
 <script src="script.js"></script>

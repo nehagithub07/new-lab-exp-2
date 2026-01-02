@@ -34,7 +34,7 @@ const stepGuide = (() => {
     {
       id: "reading",
       title: "Add a reading",
-      copy: "Choose the number of bulbs and click Add Table to log the paired readings."
+      copy: "Choose the number of bulbs and click Add To Table to log the paired readings."
     },
     {
       id: "graph",
@@ -475,7 +475,10 @@ jsPlumb.ready(function () {
   function updateControlLocks() {
     const ready = connectionsVerified && mcbOn && starterMoved;
     const lampSelect = document.getElementById("number");
-    const addBtn = Array.from(document.querySelectorAll('.pill-btn')).find(btn => btn.textContent.trim() === 'Add Table');
+    const addBtn =
+      findButtonByLabel("Add Table") ||
+      findButtonByLabel("Add To Table") ||
+      findButtonByLabel("Add");
     if (lampSelect) lampSelect.disabled = !ready;
     if (addBtn) addBtn.disabled = !ready;
     updateStarterUI();
@@ -602,7 +605,10 @@ jsPlumb.ready(function () {
       stepGuide.reset();
       const lampSel = document.getElementById("number");
       if (lampSel) lampSel.disabled = true;
-      const addBtn = Array.from(document.querySelectorAll('.pill-btn')).find(btn => btn.textContent.trim() === 'Add Table');
+      const addBtn =
+        findButtonByLabel("Add Table") ||
+        findButtonByLabel("Add To Table") ||
+        findButtonByLabel("Add");
       if (addBtn) addBtn.disabled = true;
     });
   } else {
@@ -823,7 +829,7 @@ jsPlumb.ready(function () {
               "All connections are complete.",
               "Now click the Check button to verify the connections.",
               "If the connections are correct, click the M C B to turn it on, then move the starter handle.",
-              "Select the number of bulbs and press Add Table to record readings.",
+              "Select the number of bulbs and press Add To Table to record readings.",
               "After adding at least six readings, press Graph to plot the curve."
             ],
             { interruptFirst: true }
@@ -976,6 +982,7 @@ jsPlumb.ready(function () {
 // Observation table + meter needle interactions
 // -----------------------------------------------
 (function initObservations() {
+  const sessionStartMs = Date.now();
   const lampSelect = document.getElementById("number");
   const bulbs = Array.from(document.querySelectorAll(".lamp-bulb"));
 
@@ -989,10 +996,14 @@ jsPlumb.ready(function () {
   const graphPlot = document.getElementById("graphPlot");
   const graphSection = document.querySelector(".graph-section");
 
-  const addTableBtn = findButtonByLabel("Add Table") || findButtonByLabel("Add");
+  const addTableBtn =
+    findButtonByLabel("Add Table") ||
+    findButtonByLabel("Add To Table") ||
+    findButtonByLabel("Add");
   const graphBtn = findButtonByLabel("Graph");
   const resetBtn = findButtonByLabel("Reset");
   const printBtn = findButtonByLabel("Print");
+  const reportBtn = findButtonByLabel("Report");
 
   const needle1 = document.querySelector(".meter-needle1");
   const needle2 = document.querySelector(".meter-needle2");
@@ -1007,6 +1018,7 @@ jsPlumb.ready(function () {
 
   const readingsRecorded = [];
   let selectedIndex = -1;
+  let readingArmed = false;
 
   function enforceReady(action) {
     if (!connectionsVerified) {
@@ -1014,6 +1026,7 @@ jsPlumb.ready(function () {
       if (action === "lampSelect" && lampSelect) {
         lampSelect.value = "";
         selectedIndex = -1;
+        readingArmed = false;
         updateBulbs(0);
         updateLiveReadings(-1);
         updateNeedles(-1);
@@ -1040,22 +1053,33 @@ jsPlumb.ready(function () {
     return Math.min(Math.max(val, min), max);
   }
 
-  function currentToAngle(currentValue, maxCurrent = 20) {
-    // Ammeter artwork scale: 0–20 A
+  function currentToAngle(currentValue, maxCurrent = 30) {
+    // Ammeter artwork scale: 0–30 A
     const minAngle = -74;
     const maxAngle = 74;
     const safeValue = clamp(currentValue, 0, maxCurrent);
-    const ratio = safeValue / maxCurrent;
-    return minAngle + (maxAngle - minAngle) * ratio;
+    const midCurrent = 16;
+    if (safeValue <= midCurrent) {
+      const t = safeValue / midCurrent;
+      return minAngle + (0 - minAngle) * t;
+    }
+    const t = (safeValue - midCurrent) / (maxCurrent - midCurrent);
+    return 0 + (maxAngle - 0) * t;
   }
 
   function voltageToAngle(voltageValue) {
-    // Voltmeter artwork scale: 0–240 V
-    const minAngle = -63;
-    const maxAngle = 63;
-    const safeVoltage = clamp(voltageValue, 0, 240);
-    const ratio = safeVoltage / 240;
-    return minAngle + (maxAngle - minAngle) * ratio;
+    // Voltmeter artwork scale: 0–410 V
+    const minAngle = -74;
+    const maxAngle = 74;
+    const maxVoltage = 410;
+    const midVoltage = 240;
+    const safeVoltage = clamp(voltageValue, 0, maxVoltage);
+    if (safeVoltage <= midVoltage) {
+      const t = safeVoltage / midVoltage;
+      return minAngle + (0 - minAngle) * t;
+    }
+    const t = (safeVoltage - midVoltage) / (maxVoltage - midVoltage);
+    return 0 + (maxAngle - 0) * t;
   }
 
   function updateBulbs(count) {
@@ -1153,6 +1177,273 @@ jsPlumb.ready(function () {
     });
   }
 
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function formatMinutes(ms) {
+    const minutes = Math.max(0, Math.round((ms / 60000) * 10) / 10);
+    return minutes < 1 ? "< 1" : String(minutes);
+  }
+
+  function generateReport() {
+    const tableRows = readingsRecorded.map((row, idx) => ({
+      sNo: String(idx + 1),
+      current: String(row.current),
+      voltage: String(row.voltage)
+    }));
+
+    const currentValues = tableRows
+      .map((row) => parseFloat(row.current))
+      .filter((val) => !Number.isNaN(val));
+    const voltageValues = tableRows
+      .map((row) => parseFloat(row.voltage))
+      .filter((val) => !Number.isNaN(val));
+
+    const now = new Date();
+    const startTimeText = new Date(sessionStartMs).toLocaleTimeString();
+    const endTimeMs = Date.now();
+    const endTimeText = new Date(endTimeMs).toLocaleTimeString();
+    const durationMinutes = Math.max(0, Math.round(((endTimeMs - sessionStartMs) / 60000) * 10) / 10);
+
+    const css = `
+body {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background: #f3f6fb;
+  color: #1f2d3d;
+  margin: 40px auto;
+  max-width: 960px;
+  padding: 32px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e9f2;
+  box-shadow: 0 10px 30px rgba(31, 45, 61, 0.12);
+  line-height: 1.65;
+}
+h1, h2, h3 { color: #1f2d3d; margin-top: 0; font-weight: 700; }
+h1 {
+  font-size: 28px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #2f7bfa;
+}
+h2 { font-size: 22px; margin-bottom: 10px; color: #2b3f55; }
+h3 { font-size: 18px; margin-bottom: 8px; }
+.section {
+  background: linear-gradient(135deg, #f8fbff 0%, #f3f6fb 100%);
+  padding: 20px 22px;
+  margin-bottom: 28px;
+  border-radius: 12px;
+  border: 1px solid #e5e9f2;
+  box-shadow: 0 4px 12px rgba(31,45,61,0.06);
+}
+.label { font-weight: 600; color: #1f2d3d; }
+ul { padding-left: 20px; margin-top: 10px; }
+.two-column-list { column-count: 2; column-gap: 40px; list-style-position: inside; margin-top: 10px; }
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.info-card {
+  background: #fff;
+  border: 1px solid #e5e9f2;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 10px rgba(31,45,61,0.05);
+  font-size: 14px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  box-shadow: 0 2px 10px rgba(31, 45, 61, 0.06);
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+th, td {
+  border: 1px solid #e5e9f2;
+  padding: 12px;
+  text-align: center;
+  font-size: 15px;
+}
+th {
+  background: linear-gradient(135deg, #2f7bfa 0%, #1f62d0 100%);
+  color: white;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+tr:nth-child(even) { background-color: #f8fbff; }
+.graph {
+  text-align: center;
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #e5e9f2;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(31,45,61,0.06);
+}
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 26px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.header-row h1 { flex: 1; }
+.badge {
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: #e8f1ff;
+  color: #1f62d0;
+  font-weight: 600;
+  font-size: 13px;
+}
+.print-btn {
+  margin-top: 28px;
+  padding: 12px 28px;
+  font-size: 16px;
+  background: linear-gradient(to right, #2f7bfa, #1f62d0);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.print-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(31,45,61,0.12);
+}
+@media print { .print-btn { display:none; } body { margin:0; box-shadow:none; border:none; padding:0; } }
+    `;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulation Report</title>
+  <style>${css}</style>
+  <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+</head>
+<body>
+  <div class="header-row">
+    <h1>Virtual Lab Simulation Report</h1>
+  </div>
+
+  <div class="section">
+    <p class="badge">DC Machines Lab</p>
+    <p><span class="label">Experiment Title:</span> Load Test on DC Shunt Generator</p>
+    <p><span class="label">Date:</span> ${escapeHtml(now.toLocaleDateString())}</p>
+    <div class="info-grid">
+      <div class="info-card"><span class="label">Start Time:</span><br>${escapeHtml(startTimeText)}</div>
+      <div class="info-card"><span class="label">End Time:</span><br>${escapeHtml(endTimeText)}</div>
+      <div class="info-card"><span class="label">Total Time Spent:</span><br>${escapeHtml(String(durationMinutes))} minutes</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Summary</h2>
+    <h3>Aim</h3>
+    <p style="text-align:justify;">Study the DC shunt generator characteristics by varying lamp load, recording terminal voltage and current, and plotting the V–I relationship.</p>
+
+    <h3>Procedure Summary</h3>
+    <p style="text-align:justify;">Connections were completed as instructed, supply was enabled, lamp load was varied, readings of load current and terminal voltage were taken for multiple steps, and a graph was generated to observe the voltage regulation.</p>
+
+    <h3>Components</h3>
+    <ul class="two-column-list">
+      <li>DC Shunt Generator</li>
+      <li>DC Motor (prime mover)</li>
+      <li>MCB / Supply</li>
+      <li>Lamp Load Bank</li>
+      <li>Voltmeter</li>
+      <li>Ammeter</li>
+      <li>Connecting Leads</li>
+    </ul>
+
+    <h3>Key Parameters</h3>
+    <ul class="two-column-list">
+      <li>Rated Voltage: 220–240 V DC</li>
+      <li>Load Type: Resistive Lamp Bank</li>
+      <li>Voltmeter Range: 0–410 V</li>
+      <li>Ammeter Range: 0–30 A</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h3>Observation Table</h3>
+    <table>
+      <thead>
+        <tr><th>S.No.</th><th>Current (A)</th><th>Voltage (V)</th></tr>
+      </thead>
+      <tbody>
+        ${tableRows.length ? tableRows.map(function (r) {
+            return "<tr><td>" + escapeHtml(r.sNo) + "</td><td>" + escapeHtml(r.current) + "</td><td>" + escapeHtml(r.voltage) + "</td></tr>";
+        }).join("") : "<tr><td colspan='3'>No readings recorded.</td></tr>"}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section graph">
+    <h3>Graph</h3>
+    <div id="report-graph" style="position:relative;width:100%;height:360px;"></div>
+  </div>
+
+  <button class="print-btn" onclick="window.print()">PRINT</button>
+
+  <script>
+    (function() {
+      var currents = ${JSON.stringify(currentValues)};
+      var voltages = ${JSON.stringify(voltageValues)};
+      if (currents.length && voltages.length) {
+        var trace = { x: currents, y: voltages, type: 'scatter', mode: 'lines+markers', name: 'V vs I', line: { color: '#3498db' } };
+        var layout = {
+          title: { text: 'Terminal Voltage vs Load Current' },
+          xaxis: { title: 'Load Current (A)' },
+          yaxis: { title: 'Voltage (V)' },
+          margin: { t: 60, r: 20, l: 60, b: 60 }
+        };
+        Plotly.newPlot('report-graph', [trace], layout, {displaylogo:false});
+      } else {
+        document.getElementById('report-graph').innerHTML = '<em>No readings available to plot.</em>';
+      }
+    })();
+  </script>
+</body>
+</html>`;
+
+    const reportWindow = window.open("", "report");
+    if (!reportWindow) {
+      alert("Please allow pop-ups to view the report.");
+      return;
+    }
+
+    try {
+      reportWindow.document.open("text/html", "replace");
+      reportWindow.document.write(html);
+      reportWindow.document.close();
+      reportWindow.focus();
+    } catch (err) {
+      try {
+        const blob = new Blob([html], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        reportWindow.location = url;
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      } catch (err2) {
+        console.error("Report generation failed:", err2);
+        alert("Unable to render the report. Please disable popup blockers and try again.");
+      }
+    }
+  }
+
   function addRowToTable(idx) {
     if (!observationBody) return;
 
@@ -1171,8 +1462,18 @@ jsPlumb.ready(function () {
 
   function handleAddReading() {
     if (!enforceReady("addReading")) return;
-    if (selectedIndex < 0) return; // no selection, do nothing
-    if (readingsRecorded.length >= 10) return; // cap silently
+    if (selectedIndex < 0) {
+      alert("Select the number of bulbs first.");
+      return;
+    }
+    if (!readingArmed) {
+      alert("Change the bulb selection to add the next reading.");
+      return;
+    }
+    if (readingsRecorded.length >= 10) {
+      alert("Maximum 10 readings are allowed.");
+      return;
+    }
     const load = selectedIndex + 1;
     readingsRecorded.push({
       load,
@@ -1180,6 +1481,7 @@ jsPlumb.ready(function () {
       voltage: voltmeter2Readings[selectedIndex]
     });
     addRowToTable(selectedIndex);
+    readingArmed = false;
     stepGuide.complete("reading");
   }
 
@@ -1187,6 +1489,7 @@ jsPlumb.ready(function () {
     if (!enforceReady("lampSelect")) {
       lampSelect.value = "";
       selectedIndex = -1;
+      readingArmed = false;
       updateBulbs(0);
       updateLiveReadings(-1);
       updateNeedles(-1);
@@ -1195,12 +1498,14 @@ jsPlumb.ready(function () {
     const count = parseInt(lampSelect.value, 10);
     if (isNaN(count) || count < 1 || count > 10) {
       selectedIndex = -1;
+      readingArmed = false;
       updateBulbs(0);
       updateLiveReadings(-1);
       updateNeedles(-1);
       return;
     }
     selectedIndex = count - 1;
+    readingArmed = true;
     updateBulbs(count);
     updateLiveReadings(selectedIndex);
     updateNeedles(selectedIndex);
@@ -1222,6 +1527,7 @@ jsPlumb.ready(function () {
       observationBody.innerHTML = `<tr class="placeholder-row"><td colspan="3">No readings added yet.</td></tr>`;
     }
     selectedIndex = -1;
+    readingArmed = false;
     if (lampSelect) lampSelect.value = "";
     updateBulbs(0);
     updateLiveReadings(-1);
@@ -1271,6 +1577,10 @@ jsPlumb.ready(function () {
 
   if (printBtn) {
     printBtn.addEventListener("click", () => window.print());
+  }
+
+  if (reportBtn) {
+    reportBtn.addEventListener("click", generateReport);
   }
 
   window.addEventListener(MCB_TURNED_OFF_EVENT, function () {
@@ -1328,4 +1638,180 @@ jsPlumb.ready(function () {
       closeModal();
     }
   });
+})();
+
+(function initHoverDefinitions() {
+  function setup() {
+    if (document.querySelector(".hover-tooltip")) return;
+    if (!document.body) return;
+
+    const tooltipLayer = document.createElement("div");
+    tooltipLayer.className = "hover-tooltip";
+    tooltipLayer.innerHTML =
+      '<div class="hover-tooltip__body"><div class="hover-tooltip__accent"></div><div class="hover-tooltip__text"></div></div>';
+    const tooltipText = tooltipLayer.querySelector(".hover-tooltip__text");
+    document.body.appendChild(tooltipLayer);
+
+    const TOOLTIP_SEEN_KEY = "vlab-exp2-hover-tooltips-seen-v1";
+    const seenIds = (() => {
+      try {
+        const raw = sessionStorage.getItem(TOOLTIP_SEEN_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return new Set(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        return new Set();
+      }
+    })();
+
+    function markSeen(id) {
+      if (!id) return;
+      seenIds.add(id);
+      try {
+        sessionStorage.setItem(TOOLTIP_SEEN_KEY, JSON.stringify(Array.from(seenIds)));
+      } catch {
+        // ignore storage errors
+      }
+    }
+
+    const tooltips = [
+      {
+        id: "mcb",
+        selector: ".mcb-toggle, .mcb-label, .mcb-block",
+        text: "MCB: Main supply breaker for the setup; trips on overload/short-circuit to protect the circuit and users."
+      },
+      {
+        id: "starter",
+        selector: ".starter-block, .starter-body, .starter-handle, .starter-label",
+        text: "3-Point Starter: Limits the DC motor starting current and provides no-volt/overload protection; drag the handle after turning ON the MCB."
+      },
+      {
+        id: "lamp-load",
+        selector: ".lampboard-dropdown, #number, .lamp-board, .lamp-grid, .lamp-bulb, .lamp-load-label",
+        text: "Lamp Load: Variable resistive bulb bank used to change load; select the number of bulbs to vary current and observe voltage regulation."
+      },
+      {
+        id: "ammeter-1",
+        selector: ".meters > .meter-card:nth-of-type(1), #ammter1-label",
+        text: "Ammeter-1: Measures the motor/supply current (connected in series)."
+      },
+      {
+        id: "voltmeter-1",
+        selector: ".meters > .meter-card:nth-of-type(2), #voltmeter1-label",
+        text: "Voltmeter-1: Measures the supply/line voltage (connected across the source)."
+      },
+      {
+        id: "ammeter-2",
+        selector: ".meters > .meter-card:nth-of-type(3), #ammter2-label",
+        text: "Ammeter-2: Measures the load current through the lamp load (connected in series with the load)."
+      },
+      {
+        id: "voltmeter-2",
+        selector: ".meters > .meter-card:nth-of-type(4), #voltmeter2-label",
+        text: "Voltmeter-2: Measures the generator terminal voltage (connected across generator terminals)."
+      },
+      {
+        id: "dc-motor",
+        selector: ".motor-box, .motor-box img, .dc-motor-label",
+        text: "DC Shunt Motor: Prime mover converting electrical power to mechanical power to drive the generator."
+      },
+      {
+        id: "coupler",
+        selector: ".coupler, .coupler img",
+        text: "Coupling/Shaft: Mechanical link that transfers torque from the motor to the generator."
+      },
+      {
+        id: "dc-generator",
+        selector: ".generator-box, .generator-body, .generator-rotor, .dc-generator-label",
+        text: "DC Shunt Generator: Converts mechanical power from the motor into DC output for the load; terminal voltage is measured on Voltmeter-2."
+      },
+      {
+        id: "observation-table",
+        selector: ".observation-section, #observationTable, #observationBody",
+        text: "Observation Table: Stores recorded readings of load current and terminal voltage for plotting and the report."
+      },
+      {
+        id: "output-graph",
+        selector: ".graph-section, #graphPlot, #graphBars",
+        text: "Output Graph: Plots terminal voltage (V) versus load current (A) using the readings you add to the table."
+      },
+      {
+        id: "instructions",
+        selector: ".instructions-wrapper, .instructions-btn, .instructions-panel, #instructionModal",
+        text: "Instructions: Shows the required wiring sequence and the steps to run the experiment."
+      },
+      {
+        id: "controls",
+        selector: "#pill-stack",
+        text: "Controls: Use these buttons to run the simulation (Speaking, Check, Auto Connect, Add To Table, Reset)."
+      }
+    ];
+
+    tooltips.forEach(({ selector }) => {
+      document.querySelectorAll(selector).forEach((el) => el.removeAttribute("title"));
+    });
+
+    let activeTarget = null;
+
+    function findEntry(target) {
+      if (!target || target.nodeType !== 1) return null;
+      for (const entry of tooltips) {
+        const match = target.closest(entry.selector);
+        if (match) return { match, text: entry.text, id: entry.id };
+      }
+      return null;
+    }
+
+    function moveTip(event) {
+      const padding = 16;
+      const offsetX = 14;
+      const offsetY = 14;
+
+      const maxLeft = window.innerWidth - tooltipLayer.offsetWidth - padding;
+      const maxTop = window.innerHeight - tooltipLayer.offsetHeight - padding;
+
+      const desiredLeft = event.clientX + offsetX;
+      const desiredTop = event.clientY + offsetY;
+
+      tooltipLayer.style.left = Math.max(padding, Math.min(desiredLeft, maxLeft)) + "px";
+      tooltipLayer.style.top = Math.max(padding, Math.min(desiredTop, maxTop)) + "px";
+    }
+
+    function showTip(text, event) {
+      if (!tooltipText) return;
+      tooltipText.textContent = text;
+      moveTip(event);
+      tooltipLayer.classList.add("show");
+    }
+
+    function hideTip() {
+      tooltipLayer.classList.remove("show");
+    }
+
+    document.addEventListener("mouseover", function (event) {
+      const found = findEntry(event.target);
+      if (!found) return;
+      if (found.id && seenIds.has(found.id)) return;
+      if (activeTarget === found.match) return;
+      activeTarget = found.match;
+      showTip(found.text, event);
+      markSeen(found.id);
+    });
+
+    document.addEventListener("mousemove", function (event) {
+      if (activeTarget) moveTip(event);
+    });
+
+    document.addEventListener("mouseout", function (event) {
+      if (!activeTarget) return;
+      if (event.relatedTarget && activeTarget.contains(event.relatedTarget)) return;
+      activeTarget = null;
+      hideTip();
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setup, { once: true });
+  } else {
+    setup();
+  }
 })();
