@@ -129,9 +129,10 @@ const sharedControls = {
 
 function findButtonByLabel(label) {
   if (!label) return null;
-  const target = label.trim().toLowerCase();
+  const normalize = (value) => String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+  const target = normalize(label);
   const buttons = document.querySelectorAll(".pill-btn, .graph-pill-btn");
-  return Array.from(buttons).find(btn => btn.textContent.trim().toLowerCase() === target) || null;
+  return Array.from(buttons).find(btn => normalize(btn.textContent) === target) || null;
 }
 
 if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
@@ -668,13 +669,14 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
   (function initSpeakingGuidance() {
     const speakingBtn = findButtonByLabel("Speaking") || findButtonByLabel("Start Speaking");
     if (!speakingBtn) return;
+    const labelEl = speakingBtn.querySelector(".speak-btn__label");
 
     const speechSupported =
       typeof window !== "undefined" &&
       "speechSynthesis" in window &&
       typeof window.SpeechSynthesisUtterance === "function";
 
-    const originalLabel = speakingBtn.textContent;
+    const originalLabel = (labelEl ? labelEl.textContent : speakingBtn.textContent).trim();
     const highlightClass = "speak-glow";
 
     if (!speechSupported) {
@@ -853,7 +855,9 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
     }
 
     function setSpeakingUiState(active) {
-      speakingBtn.textContent = active ? "Stop Speaking" : originalLabel;
+      const nextLabel = active ? "Stop Speaking" : originalLabel;
+      if (labelEl) labelEl.textContent = nextLabel;
+      else speakingBtn.textContent = nextLabel;
       speakingBtn.setAttribute("aria-pressed", active ? "true" : "false");
     }
 
@@ -990,11 +994,6 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
   const lampSelect = document.getElementById("number");
   const bulbs = Array.from(document.querySelectorAll(".lamp-bulb"));
 
-  const liveA1 = document.getElementById("liveA1");
-  const liveV1 = document.getElementById("liveV1");
-  const liveA2 = document.getElementById("liveA2");
-  const liveV2 = document.getElementById("liveV2");
-
   const observationBody = document.getElementById("observationBody");
   const graphBars = document.getElementById("graphBars");
   const graphPlot = document.getElementById("graphPlot");
@@ -1032,7 +1031,6 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
         selectedIndex = -1;
         readingArmed = false;
         updateBulbs(0);
-        updateLiveReadings(-1);
         updateNeedles(-1);
       }
       return false;
@@ -1093,24 +1091,6 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       bulb.classList.toggle("on", isOn);
       bulb.classList.toggle("off", !isOn);
     });
-  }
-
-  function updateLiveReadings(idx) {
-    if (idx < 0) {
-      [liveA1, liveV1, liveA2, liveV2].forEach((el) => {
-        if (el) el.textContent = "--";
-      });
-      return;
-    }
-    const a1 = ammeter1Readings[idx];
-    const v1 = voltmeter1Readings[idx];
-    const a2 = ammeter2Readings[idx];
-    const v2 = voltmeter2Readings[idx];
-
-    if (liveA1) liveA1.textContent = `${a1.toFixed(1)} A`;
-    if (liveV1) liveV1.textContent = `${v1.toFixed(0)} V`;
-    if (liveA2) liveA2.textContent = `${a2.toFixed(1)} A`;
-    if (liveV2) liveV2.textContent = `${v2.toFixed(0)} V`;
   }
 
   function updateNeedles(idx) {
@@ -1495,7 +1475,6 @@ tr:nth-child(even) { background-color: #f8fbff; }
       selectedIndex = -1;
       readingArmed = false;
       updateBulbs(0);
-      updateLiveReadings(-1);
       updateNeedles(-1);
       return;
     }
@@ -1504,14 +1483,12 @@ tr:nth-child(even) { background-color: #f8fbff; }
       selectedIndex = -1;
       readingArmed = false;
       updateBulbs(0);
-      updateLiveReadings(-1);
       updateNeedles(-1);
       return;
     }
     selectedIndex = count - 1;
     readingArmed = true;
     updateBulbs(count);
-    updateLiveReadings(selectedIndex);
     updateNeedles(selectedIndex);
   }
 
@@ -1534,7 +1511,6 @@ tr:nth-child(even) { background-color: #f8fbff; }
     readingArmed = false;
     if (lampSelect) lampSelect.value = "";
     updateBulbs(0);
-    updateLiveReadings(-1);
     updateNeedles(-1);
     if (graphBars) graphBars.style.display = "block";
     if (graphPlot) {
@@ -1597,13 +1573,11 @@ tr:nth-child(even) { background-color: #f8fbff; }
       addTableBtn.disabled = true;
     }
     updateBulbs(0);
-    updateLiveReadings(-1);
     updateNeedles(-1);
   });
 
   // initialize defaults
   updateBulbs(0);
-  updateLiveReadings(-1);
   updateNeedles(-1);
   sharedControls.updateControlLocks();
 

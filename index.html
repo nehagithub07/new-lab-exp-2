@@ -103,7 +103,7 @@
                 <div class="meter-needle1">
                   <img src="images/needle.png" alt="needle">
                 </div>
-                <div id="liveA1" class="meter-reading" aria-live="polite">--</div>
+                
                 <div>
                     <button class="point-C">C</button>
                    <button class="point-D">D</button>
@@ -119,8 +119,6 @@
                 <div class="meter-needle3">
                   <img src="images/needle.png" alt="needle">
                 </div>
-                <div id="liveV1" class="meter-reading" aria-live="polite">--</div>
-                
                 <div>
                    <button class="point-E">E</button>
                    <button class="point-G">G</button>
@@ -136,10 +134,9 @@
                 <div class="meter-needle2">
                   <img src="images/needle.png" alt="needle">
                 </div>
-                <div id="liveA2" class="meter-reading" aria-live="polite">--</div>
                  <div>
-                    <button class="point-H">H</button>
-                    <button class="point-I">I</button>
+                     <button class="point-H">H</button>
+                     <button class="point-I">I</button>
                      
                    <div id="pointH" class="point"></div>
                    <div id="pointI" class="point"></div>
@@ -152,10 +149,9 @@
                 <div class="meter-needle4">
                   <img src="images/needle.png" alt="needle">
                 </div>
-                <div id="liveV2" class="meter-reading" aria-live="polite">--</div>
                  <div>
-                    <button class="point-J">J</button>
-                    <button class="point-K">K</button>
+                     <button class="point-J">J</button>
+                     <button class="point-K">K</button>
                      
                    <div id="pointJ" class="point"></div>
                    <div id="pointK" class="point"></div>
@@ -229,7 +225,7 @@
         <section class="observation-section observation-floating">
           <div class="observation-header">
             <div>
-              <h3>Observation Table</h3>
+              <h3 class="table-label">Observation Table</h3>
             </div>
           </div>
           <div class="observation-table-wrapper">
@@ -240,13 +236,13 @@
                   <th>Current (A)</th>
                   <th>Voltage (V)</th>
                 </tr>
-              </thead>
-              <tbody id="observationBody">
-                <tr class="placeholder-row">
-                  <td colspan="3">No readings added yet.</td>
-                </tr>
-              </tbody>
-            </table>
+             </thead>
+             <tbody id="observationBody">
+               <tr class="placeholder-row">
+                 <td colspan="3">No readings added yet.</td>
+               </tr>
+             </tbody>
+             </table>
           </div>
         </section>
 
@@ -276,11 +272,21 @@
              <p><strong>STEP 8:</strong> Click on <b>"Print"</b> Button to print the webpage.</p>
              <p><strong>STEP 9:</strong> Click on <b>"Reset"</b> Button to reset the webpage.</p>
            </div>
-         </div>
-          <button class="pill-btn" type="button">Start Speaking</button>
-           <button class="pill-btn" type="button">Check</button>
-           
-            <button class="pill-btn" type="button">Auto Connect</button>
+          </div>
+          <button class="pill-btn speak-btn" type="button" aria-pressed="false">
+            <span class="speak-btn__icon" aria-hidden="true">
+              <svg class="speak-btn__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">
+                <path d="M11 5L6 9H3v6h3l5 4V5z" />
+                <path class="speak-btn__wave wave-1" d="M15.5 8.5a4 4 0 010 7" />
+                <path class="speak-btn__wave wave-2" d="M17.8 6.2a7 7 0 010 11.6" />
+                <path class="speak-btn__wave wave-3" d="M20.1 3.9a10 10 0 010 16.2" />
+              </svg>
+            </span>
+            <span class="speak-btn__label">Start Speaking</span>
+          </button>
+            <button class="pill-btn" type="button">Check</button>
+            
+             <button class="pill-btn" type="button">Auto Connect</button>
             <button class="pill-btn" type="button">Add To Table</button>
             <button class="pill-btn" type="button">Reset</button>
         </div>
