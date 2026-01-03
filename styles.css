@@ -395,14 +395,14 @@ h3 {
   overflow: visible;
 }
 
-.meter-card img {
+.meter-card > img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   border-radius: 4px;
 }
 
-.meters .meter-card:nth-of-type(-n+2) img {
+.meters .meter-card:nth-of-type(-n+2) > img {
   transform: scale(1.06);
   transform-origin: center;
 }
@@ -433,20 +433,37 @@ h3 {
 .meter-needle3,
 .meter-needle4 {
   position: absolute;
-  width: clamp(22px, 2.5vw, 38px);
-  height: auto;
+  width: clamp(30px, 22%, 60px);
   left: 50%;
-  top: 55%;
-  transform-origin: 50% 90%;
-  transform: translate(-50%, -90%) rotate(-68deg);
+  top: 54%;
+  transform-origin: 50% 82.5%;
+  transform: translate(-50%, -82.5%) rotate(0deg);
   pointer-events: none;
   z-index: 5;
 }
 
-/* small tweak for 3/4 if needed */
+.meter-needle1,
+.meter-needle2 {
+  transform: translate(-50%, -82.5%) rotate(-76deg);
+}
+
+/* Voltmeter artwork has a lower pivot point */
 .meter-needle3,
 .meter-needle4 {
-  top: 56%;
+  top: 67%;
+  transform: translate(-50%, -82.5%) rotate(-49deg);
+}
+
+.meter-needle1 img,
+.meter-needle2 img,
+.meter-needle3 img,
+.meter-needle4 img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  border-radius: 0;
+  transform: none;
 }
 
 /* =========================
@@ -933,7 +950,7 @@ h3 {
 }
 .table-label {
   position: relative;
-  left: 50px;
+  left: 60px;
 }
 .observation-caption {
   margin-top: 6px;
@@ -1011,7 +1028,7 @@ h3 {
 
 .observation-floating {
   position: absolute;
-  top: 200px;
+  top: 250px;
   right: -420px;
   width: 50%;
   min-width: 230px;
@@ -1058,9 +1075,9 @@ h3 {
 
 .graph-title {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: fit-content;
+  justify-content: center;
+  align-items: center;
+  margin-left: 380px;
 }
 
 .graph-actions {
@@ -1085,8 +1102,8 @@ h3 {
   position: relative;
   /* Reduced height for better vertical fit */
   height: clamp(180px, 25vw, 280px);
-  border: 3px solid var(--ink);
-  background: linear-gradient(180deg, #f3efe6, #e5dfd3);
+  /* border: 3px solid var(--ink);
+  background: linear-gradient(180deg, #f3efe6, #e5dfd3); */
   background-image:
     repeating-linear-gradient(to right, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 60px),
     repeating-linear-gradient(to top, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 60px);
@@ -1097,7 +1114,7 @@ h3 {
 .graph-canvas::after {
   content: "";
   position: absolute;
-  background: var(--ink);
+  /* background: var(--ink); */
   opacity: 0.8;
 }
 
@@ -1522,11 +1539,15 @@ h3 {
 ========================= */
 .instructions-wrapper {
   position: relative;
-  width: 100%;
+  width: auto;
+  flex: 0 1 auto;
+  display: block;
+  height: 100%;
 }
 
 .instructions-wrapper .pill-btn {
   width: 100%;
+  height: 100%;
 }
 
 .instructions-panel {
@@ -1597,33 +1618,39 @@ h3 {
 #pill-stack {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 48px);
   gap: 15px;
   width: 100%;
   max-width: 500px;
   min-width: 350px;
-  height: 150px;
+  height: auto;
   margin-top: 20px;
-
+ 
 }
 
 .pill-btn {
-   position: absolute;
-   right: 50px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  position: relative;
   color: white;
   border: none;
-  padding: 10px 38px;
   border-radius: 50px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  background-image: linear-gradient(to right, #232526 0%, #414345  51%, #232526  100%);
+  width: 100%;
+  height: 100%;
+  padding: 0 15px;
+  text-align: center;
+  white-space: nowrap;
+  right: 50px;
 }
 
 .btn-icon {
@@ -1636,15 +1663,20 @@ h3 {
 }
 
 .btn-icon svg {
+  
   width: 100%;
   height: 100%;
+ 
 }
 
 .speak-btn {
-  gap: 0;
-  padding: 10px;
-  width: 54px;
-  height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 15px;
+  width: 100%;
+  height: 100%;
   border-radius: 999px;
 }
 
@@ -1652,13 +1684,23 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.5em;
-  height: 3.5em;
+  width: 1.35em;
+  height: 1.35em;
   flex-shrink: 0;
 }
 .speak-btn__icon img {
-    height: 2.5em;
-    width: 1.5em;
+  height: 1.35em;
+  width: 1.35em;
+}
+
+.speak-btn__svg {
+  width: 100%;
+  height: 100%;
+}
+
+.speak-btn__label {
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .speak-btn__wave {
@@ -1707,8 +1749,6 @@ h3 {
     animation: none;
   }
 }
-
-.pill-btn {background-image: linear-gradient(to right, #232526 0%, #414345  51%, #232526  100%)}
  
  .pill-btn:hover {
    background-position: right center; /* change the direction of the change here */
@@ -1760,7 +1800,7 @@ h3 {
   gap: 10px;
   color: white;
   border: none;
-  padding: 10px 38px;
+  padding: 0 20px;
   border-radius: 50px;
   font-size: 15px;
   font-weight: 600;
@@ -1770,7 +1810,11 @@ h3 {
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-  background-image: linear-gradient(to right, #232526 0%, #414345  51%, #232526  100%)
+  background-image: linear-gradient(to right, #232526 0%, #414345  51%, #232526  100%);
+  width: 150px;
+  height: 48px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .graph-pill-btn:hover {
@@ -1809,7 +1853,7 @@ h3 {
 
   #pill-stack {
     max-width: 100%;
-    grid-template-columns: 1fr;
+    justify-content: flex-start;
   }
 
 
