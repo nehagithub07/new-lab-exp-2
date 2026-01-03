@@ -3,9 +3,18 @@ let starterMoved = false;
 let mcbOn = false;
 const CONNECTION_VERIFIED_EVENT = "connections-verified";
 const MCB_TURNED_OFF_EVENT = "mcb-turned-off";
+const MCB_TURNED_ON_EVENT = "mcb-turned-on";
+const STARTER_MOVED_EVENT = "starter-moved";
 const WIRE_CURVINESS = -50;
 
 const generatorRotor = document.querySelector(".generator-rotor");
+
+window.labSpeech = window.labSpeech || {
+  isActive: () => false,
+  say: () => Promise.resolve(),
+  sayLines: () => Promise.resolve(),
+  cancel: () => {}
+};
 
 function updateRotorSpin() {
   if (!generatorRotor) return;
@@ -443,9 +452,13 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
     starterHandle.style.left = targetLeft + '%';
     starterHandle.style.top = targetTop + '%';
 
+    const wasMoved = starterMoved;
     starterMoved = targetT === 1;
     if (starterMoved) {
       stepGuide.complete("starter");
+      if (!wasMoved) {
+        window.dispatchEvent(new CustomEvent(STARTER_MOVED_EVENT));
+      }
     }
     starterHandle.style.cursor = (connectionsVerified && mcbOn && !starterMoved) ? 'grab' : 'default';
     updateControlLocks();
@@ -496,6 +509,9 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
     mcbOn = !!isOn;
     mcbImg.src = isOn ? "images/mcb-on.png" : "images/mcb-off.png";
     mcbImg.classList.toggle("is-on", mcbOn);
+    if (!wasOn && mcbOn) {
+      window.dispatchEvent(new CustomEvent(MCB_TURNED_ON_EVENT));
+    }
     if (wasOn && !mcbOn) {
       starterMoved = false;
       if (starterHandle) {
@@ -568,6 +584,9 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
   if (checkBtn) {
     console.log("Check button found and wired."); // Debug log
     checkBtn.addEventListener("click", function () {
+      if (window.labSpeech && typeof window.labSpeech.cancel === "function") {
+        window.labSpeech.cancel();
+      }
       const connections = jsPlumb.getAllConnections();
       const seenKeys = new Set();
       const illegal = [];
@@ -750,6 +769,7 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       const voices = window.speechSynthesis.getVoices();
       if (!voices || !voices.length) return null;
       return (
+        voices.find((v) => /ravi/i.test(v.name)) ||
         voices.find((v) => (v.lang || "").toLowerCase().startsWith("en") && !/google/i.test(v.name)) ||
         voices.find((v) => (v.lang || "").toLowerCase().startsWith("en")) ||
         voices[0]
@@ -772,7 +792,7 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
           const utterance = new SpeechSynthesisUtterance(String(text));
           const voice = pickVoice();
           if (voice) utterance.voice = voice;
-          utterance.rate = 0.95;
+          utterance.rate = 0.8;
           utterance.pitch = 1;
           utterance.onend = () => resolve();
           utterance.onerror = () => resolve();
@@ -821,7 +841,7 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       return -1;
     }
 
-    function promptNext({ forceSpeak = false } = {}) {
+    function promptNext({ forceSpeak = false, reason = "next" } = {}) {
       if (!speakingActive) return;
 
       const idx = getNextMissingIndex();
@@ -829,16 +849,9 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
         clearHighlights();
         if (currentPromptIndex !== -2 || forceSpeak) {
           currentPromptIndex = -2;
-          queueSpeech(
-            [
-              "All connections are complete.",
-              "Now click the Check button to verify the connections.",
-              "If the connections are correct, click the M C B to turn it on, then move the starter handle.",
-              "Select the number of bulbs and press Add To Table to record readings.",
-              "After adding at least six readings, press Graph to plot the curve."
-            ],
-            { interruptFirst: true }
-          );
+          queueSpeech(["All connections are complete. Now, click the Check button to verify the connections."], {
+            interruptFirst: true
+          });
         }
         return;
       }
@@ -850,7 +863,15 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
         currentPromptIndex = idx;
         const from = getTerminalLabel(a);
         const to = getTerminalLabel(b);
-        queueSpeech([`Please connect ${from} to ${to}.`], { interruptFirst: true });
+        const line =
+          reason === "start"
+            ? `Start connecting the components, beginning with ${from} to ${to}.`
+            : reason === "retry"
+              ? `Please, connect ${from} to ${to}.`
+              : idx === 0
+                ? `Please connect ${from} to ${to}.`
+                : `Next, connect ${from} to ${to}.`;
+        queueSpeech([line], { interruptFirst: true });
       }
     }
 
@@ -859,6 +880,8 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       if (labelEl) labelEl.textContent = nextLabel;
       else speakingBtn.textContent = nextLabel;
       speakingBtn.setAttribute("aria-pressed", active ? "true" : "false");
+      speakingBtn.setAttribute("aria-label", nextLabel);
+      speakingBtn.title = nextLabel;
     }
 
     function startSpeaking() {
@@ -872,9 +895,19 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
 
       speechQueue = Promise.resolve();
       stopSpeechOutput();
+      if (window.jsPlumb) {
+        if (typeof jsPlumb.deleteEveryConnection === "function") {
+          jsPlumb.deleteEveryConnection();
+        } else if (typeof jsPlumb.getAllConnections === "function") {
+          jsPlumb.getAllConnections().forEach((c) => jsPlumb.deleteConnection(c));
+        }
+        if (typeof jsPlumb.repaintEverything === "function") {
+          jsPlumb.repaintEverything();
+        }
+      }
       primeSpeechEngine().finally(() => {
         queueSpeech(["Guided speaking started. Follow the highlighted terminals."], { interruptFirst: true }).finally(() => {
-          promptNext({ forceSpeak: true });
+          promptNext({ forceSpeak: true, reason: "start" });
         });
       });
     }
@@ -889,6 +922,20 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       currentPromptIndex = -1;
     }
 
+    window.labSpeech.isActive = () => speakingActive;
+    window.labSpeech.say = (text, options = {}) => {
+      if (!speakingActive) return Promise.resolve();
+      return queueSpeech([text], options);
+    };
+    window.labSpeech.sayLines = (lines, options = {}) => {
+      if (!speakingActive) return Promise.resolve();
+      return queueSpeech(lines, options);
+    };
+    window.labSpeech.cancel = () => {
+      stopSpeechOutput();
+      speechQueue = Promise.resolve();
+    };
+
     speakingBtn.addEventListener("click", () => {
       if (speakingActive) stopSpeaking();
       else startSpeaking();
@@ -899,21 +946,34 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       if (!speakingActive) return;
 
       const key = connectionKey(info.sourceId, info.targetId);
+
       if (!requiredConnections.has(key)) {
         // Not part of the wiring plan: remove it and re-prompt.
         if (info.connection) {
           jsPlumb.deleteConnection(info.connection);
           jsPlumb.repaintEverything();
         }
-        const nextIdx = getNextMissingIndex();
-        if (nextIdx >= 0) {
-          const [a, b] = requiredPairs[nextIdx].split("-");
-          highlightTerminals([a, b]);
-          queueSpeech([`Wrong connection. Please connect ${getTerminalLabel(a)} to ${getTerminalLabel(b)}.`], {
-            interruptFirst: true
-          });
-        }
+        queueSpeech(["Wrong connection. Try again."], { interruptFirst: true }).finally(() => {
+          promptNext({ forceSpeak: true, reason: "retry" });
+        });
         return;
+      }
+
+      // Enforce order: only accept the currently prompted connection.
+      if (currentPromptIndex >= 0) {
+        const [expectedA, expectedB] = requiredPairs[currentPromptIndex].split("-");
+        const expectedKey = connectionKey(expectedA, expectedB);
+        if (key !== expectedKey) {
+          if (info.connection) {
+            jsPlumb.deleteConnection(info.connection);
+            jsPlumb.repaintEverything();
+          }
+          queueSpeech(["Incorrect connection. Try again."], { interruptFirst: true }).finally(() => {
+            highlightTerminals([expectedA, expectedB]);
+            promptNext({ forceSpeak: true, reason: "retry" });
+          });
+          return;
+        }
       }
 
       // Correct/allowed connection: move on (skips any already-connected steps).
@@ -933,6 +993,16 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
     window.addEventListener(CONNECTION_VERIFIED_EVENT, function () {
       if (!speakingActive) return;
       queueSpeech(["Connections verified. Click the M C B to turn it on."], { interruptFirst: true });
+    });
+
+    window.addEventListener(MCB_TURNED_ON_EVENT, function () {
+      if (!speakingActive) return;
+      queueSpeech(["Now, move the starter handle from left to right."], { interruptFirst: true });
+    });
+
+    window.addEventListener(STARTER_MOVED_EVENT, function () {
+      if (!speakingActive) return;
+      queueSpeech(["Now, select the number of bulbs from the lamp load."], { interruptFirst: true });
     });
 
     window.addEventListener(MCB_TURNED_OFF_EVENT, function () {
@@ -991,6 +1061,7 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
 // -----------------------------------------------
 (function initObservations() {
   const sessionStartMs = Date.now();
+  const minGraphPoints = 6;
   const lampSelect = document.getElementById("number");
   const bulbs = Array.from(document.querySelectorAll(".lamp-bulb"));
 
@@ -1023,9 +1094,40 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
   let selectedIndex = -1;
   let readingArmed = false;
 
+  function speechIsActive() {
+    return (
+      typeof window !== "undefined" &&
+      window.labSpeech &&
+      typeof window.labSpeech.isActive === "function" &&
+      window.labSpeech.isActive()
+    );
+  }
+
+  function speak(text) {
+    if (!text || !speechIsActive()) return;
+    if (window.labSpeech && typeof window.labSpeech.say === "function") {
+      window.labSpeech.say(text, { interruptFirst: true });
+    }
+  }
+
+  function speakOrAlert(text) {
+    if (!text) return;
+    if (speechIsActive()) speak(text);
+    else alert(text);
+  }
+
+  function updateGraphControls() {
+    if (graphBtn) {
+      graphBtn.disabled = readingsRecorded.length < minGraphPoints;
+    }
+    if (reportBtn) {
+      reportBtn.disabled = readingsRecorded.length < minGraphPoints;
+    }
+  }
+
   function enforceReady(action) {
     if (!connectionsVerified) {
-      alert("You have to check the connections first.");
+      speakOrAlert("You have to check the connections first.");
       if (action === "lampSelect" && lampSelect) {
         lampSelect.value = "";
         selectedIndex = -1;
@@ -1036,11 +1138,11 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       return false;
     }
     if (!mcbOn) {
-      alert("Turn on the MCB before continuing.");
+      speakOrAlert("Turn on the MCB before continuing.");
       return false;
     }
     if (!starterMoved) {
-      alert("You have to move starter handle from left to right");
+      speakOrAlert("You have to move starter handle from left to right");
       return false;
     }
     return true;
@@ -1109,9 +1211,8 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
   }
 
   function renderGraph() {
-    const minPoints = 6;
-    if (readingsRecorded.length < minPoints) {
-      alert(`Add at least ${minPoints} readings, then press the Graph button.`);
+    if (readingsRecorded.length < minGraphPoints) {
+      speakOrAlert(`Please take at least ${minGraphPoints} readings in the table.`);
       return;
     }
 
@@ -1156,6 +1257,10 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
 
       window.Plotly.newPlot(graphPlot, [trace], layout, { displaylogo: false, responsive: true });
       stepGuide.complete("graph");
+      updateGraphControls();
+      speak(
+        "The graph of terminal voltage versus load current has been plotted. Your experiment is now complete. You may view the generated report by clicking the Report button."
+      );
     }).catch(() => {
       alert("Unable to load graphing library. Please check your connection and try again.");
     });
@@ -1447,15 +1552,15 @@ tr:nth-child(even) { background-color: #f8fbff; }
   function handleAddReading() {
     if (!enforceReady("addReading")) return;
     if (selectedIndex < 0) {
-      alert("Select the number of bulbs first.");
+      speakOrAlert("Select the number of bulbs first.");
       return;
     }
     if (!readingArmed) {
-      alert("Change the bulb selection to add the next reading.");
+      speakOrAlert("Change the bulb selection to add the next reading.");
       return;
     }
     if (readingsRecorded.length >= 10) {
-      alert("Maximum 10 readings are allowed.");
+      speakOrAlert("You can only add maximum 10 readings in the table. Now, click on Graph button.");
       return;
     }
     const load = selectedIndex + 1;
@@ -1467,6 +1572,13 @@ tr:nth-child(even) { background-color: #f8fbff; }
     addRowToTable(selectedIndex);
     readingArmed = false;
     stepGuide.complete("reading");
+
+    updateGraphControls();
+    if (readingsRecorded.length < minGraphPoints) {
+      speak("Once again, change the bulb selection.");
+    } else if (readingsRecorded.length >= minGraphPoints && readingsRecorded.length < 10) {
+      speak("Now, you can plot the graph by clicking on the Graph button or add more readings to the table.");
+    }
   }
 
   function handleSelectionChange() {
@@ -1490,9 +1602,18 @@ tr:nth-child(even) { background-color: #f8fbff; }
     readingArmed = true;
     updateBulbs(count);
     updateNeedles(selectedIndex);
+
+    if (readingsRecorded.length === 0) {
+      speak("Press the Add To Table button to insert the values into the table.");
+    } else {
+      speak("Click the Add To Table button again.");
+    }
   }
 
   function resetObservations() {
+    if (window.labSpeech && typeof window.labSpeech.cancel === "function") {
+      window.labSpeech.cancel();
+    }
     if (window.jsPlumb) {
       if (typeof jsPlumb.deleteEveryConnection === "function") {
         jsPlumb.deleteEveryConnection();
@@ -1530,6 +1651,7 @@ tr:nth-child(even) { background-color: #f8fbff; }
     sharedControls.updateControlLocks();
     updateRotorSpin();
     stepGuide.reset();
+    updateGraphControls();
   }
 
   if (lampSelect) {
@@ -1543,6 +1665,7 @@ tr:nth-child(even) { background-color: #f8fbff; }
   }
 
   if (graphBtn) {
+    graphBtn.disabled = true;
     graphBtn.addEventListener("click", function () {
       renderGraph();
       if (graphSection && typeof graphSection.scrollIntoView === "function") {
@@ -1561,6 +1684,7 @@ tr:nth-child(even) { background-color: #f8fbff; }
 
   if (reportBtn) {
     reportBtn.addEventListener("click", generateReport);
+    reportBtn.disabled = true;
   }
 
   window.addEventListener(MCB_TURNED_OFF_EVENT, function () {
@@ -1579,6 +1703,7 @@ tr:nth-child(even) { background-color: #f8fbff; }
   // initialize defaults
   updateBulbs(0);
   updateNeedles(-1);
+  updateGraphControls();
   sharedControls.updateControlLocks();
 
   window.addEventListener(CONNECTION_VERIFIED_EVENT, function () {

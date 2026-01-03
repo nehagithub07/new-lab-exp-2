@@ -18,6 +18,18 @@ img {
   display: block;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 :root {
   --bg: #d7d0c4;
   --ink: #111;
@@ -1597,6 +1609,10 @@ h3 {
 .pill-btn {
    position: absolute;
    right: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   color: white;
   border: none;
   padding: 10px 38px;
@@ -1610,15 +1626,7 @@ h3 {
   overflow: hidden;
 }
 
-.speak-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px 28px;
-}
-
-.speak-btn__icon {
+.btn-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1627,9 +1635,30 @@ h3 {
   flex-shrink: 0;
 }
 
-.speak-btn__svg {
+.btn-icon svg {
   width: 100%;
   height: 100%;
+}
+
+.speak-btn {
+  gap: 0;
+  padding: 10px;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+}
+
+.speak-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 3.5em;
+  flex-shrink: 0;
+}
+.speak-btn__icon img {
+    height: 2.5em;
+    width: 1.5em;
 }
 
 .speak-btn__wave {
@@ -1711,7 +1740,24 @@ h3 {
   transform: translateY(-1px);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
+
+.pill-btn:disabled,
+.graph-pill-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.pill-btn:disabled::before,
+.graph-pill-btn:disabled::before {
+  display: none;
+}
 .graph-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   color: white;
   border: none;
   padding: 10px 38px;

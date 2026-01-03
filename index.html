@@ -249,7 +249,16 @@
       </section>
       <div id="pill-stack">
          <div class="instructions-wrapper">
-           <button class="pill-btn instructions-btn" type="button">Instructions</button>
+           <button class="pill-btn instructions-btn" type="button">
+             <span class="btn-icon" aria-hidden="true">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                 <circle cx="12" cy="12" r="10" />
+                 <path d="M12 16v-4" />
+                 <path d="M12 8h.01" />
+               </svg>
+             </span>
+             <span class="btn-label">Instructions</span>
+           </button>
             <div class="instructions-panel" role="note" aria-label="Experiment instructions preview">
              <h4>STEP 1: Make connections as per instructions below:</h4>
              <table class="conn-table">
@@ -273,7 +282,7 @@
              <p><strong>STEP 9:</strong> Click on <b>"Reset"</b> Button to reset the webpage.</p>
            </div>
           </div>
-          <button class="pill-btn speak-btn" type="button" aria-pressed="false">
+          <button class="pill-btn speak-btn" type="button" aria-pressed="false" aria-label="Start Speaking" title="Start Speaking">
             <span class="speak-btn__icon" aria-hidden="true">
               <svg class="speak-btn__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">
                 <path d="M11 5L6 9H3v6h3l5 4V5z" />
@@ -282,13 +291,45 @@
                 <path class="speak-btn__wave wave-3" d="M20.1 3.9a10 10 0 010 16.2" />
               </svg>
             </span>
-            <span class="speak-btn__label">Start Speaking</span>
+            <span class="speak-btn__label sr-only">Start Speaking</span>
           </button>
-            <button class="pill-btn" type="button">Check</button>
+            <button class="pill-btn" type="button">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              </span>
+              <span class="btn-label">Check</span>
+            </button>
             
-             <button class="pill-btn" type="button">Auto Connect</button>
-            <button class="pill-btn" type="button">Add To Table</button>
-            <button class="pill-btn" type="button">Reset</button>
+             <button class="pill-btn" type="button">
+               <span class="btn-icon" aria-hidden="true">
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                   <path d="M10 13a5 5 0 007.07 0l1.41-1.41a5 5 0 00-7.07-7.07L10 5" />
+                   <path d="M14 11a5 5 0 00-7.07 0L5.5 12.5a5 5 0 007.07 7.07L14 19" />
+                 </svg>
+               </span>
+               <span class="btn-label">Auto Connect</span>
+             </button>
+            <button class="pill-btn" type="button">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <path d="M12 8v8" />
+                  <path d="M8 12h8" />
+                </svg>
+              </span>
+              <span class="btn-label">Add To Table</span>
+            </button>
+            <button class="pill-btn" type="button">
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                  <path d="M1 4v6h6" />
+                  <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+                </svg>
+              </span>
+              <span class="btn-label">Reset</span>
+            </button>
         </div>
      </section>
 
@@ -378,9 +419,37 @@
           <h3>Output Graph</h3>
         </div>
         <div class="graph-actions">
-          <button class="graph-pill-btn" type="button">Graph</button>
-          <button class="graph-pill-btn" type="button">Report</button>
-          <button class="graph-pill-btn" type="button">Print</button>
+          <button class="graph-pill-btn" type="button">
+            <span class="btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M23 6l-9.5 9.5-5-5L1 18" />
+                <path d="M17 6h6v6" />
+              </svg>
+            </span>
+            <span class="btn-label">Graph</span>
+          </button>
+          <button class="graph-pill-btn" type="button">
+            <span class="btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M16 13H8" />
+                <path d="M16 17H8" />
+                <path d="M10 9H8" />
+              </svg>
+            </span>
+            <span class="btn-label">Report</span>
+          </button>
+          <button class="graph-pill-btn" type="button">
+            <span class="btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M6 9V2h12v7" />
+                <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+            </span>
+            <span class="btn-label">Print</span>
+          </button>
         </div>
       </div>
       <div class="graph-canvas">
