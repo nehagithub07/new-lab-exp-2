@@ -9,12 +9,135 @@ const WIRE_CURVINESS = -50;
 
 const generatorRotor = document.querySelector(".generator-rotor");
 
-window.labSpeech = window.labSpeech || {
-  isActive: () => false,
-  say: () => Promise.resolve(),
-  sayLines: () => Promise.resolve(),
-  cancel: () => {}
+let suppressAllAutoVoices = true;
+let suppressGuideDuringAutoConnect = false;
+let isAutoConnecting = false;
+
+function resetSpeakButtonUI() {
+  const speakBtn = document.querySelector(".speak-btn");
+  if (!speakBtn) return;
+
+  speakBtn.classList.remove("guiding");
+  speakBtn.setAttribute("aria-pressed", "false");
+
+  const label = speakBtn.querySelector(".speak-btn__label");
+  if (label) {
+    label.textContent = "Tap To Listen";
+  }
+}
+
+if (typeof window !== "undefined" && "speechSynthesis" in window) {
+  window.speechSynthesis.cancel();
+}
+resetSpeakButtonUI();
+
+function pickPreferredVoice() {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices || !voices.length) return null;
+
+  const englishVoices = voices.filter((voice) =>
+    String(voice.lang || "").toLowerCase().startsWith("en")
+  );
+
+  const maleByGender = englishVoices.find(
+    (voice) => String(voice.gender || "").toLowerCase() === "male"
+  );
+  if (maleByGender) return maleByGender;
+
+  const maleNameHints = [
+    /male/i,
+    /ravi/i,
+    /hemant/i,
+    /david/i,
+    /mark/i,
+    /george/i,
+    /daniel/i,
+    /alex/i,
+    /fred/i,
+    /john/i,
+    /james/i,
+    /mike/i,
+    /andrew/i,
+    /tom/i,
+    /steve/i,
+    /roger/i
+  ];
+  const maleByName = englishVoices.find((voice) =>
+    maleNameHints.some((hint) => hint.test(String(voice.name || "")))
+  );
+  if (maleByName) return maleByName;
+
+  const enIndia = englishVoices.find((voice) =>
+    String(voice.lang || "").toLowerCase().startsWith("en-in")
+  );
+  return enIndia || englishVoices[0] || voices[0];
+}
+
+window.labSpeech = window.labSpeech || {};
+window.labSpeech.enabled = true;
+window.labSpeech.speak = function speak(text, options = {}) {
+  if (!window.labSpeech.enabled) return Promise.resolve();
+  if (
+    typeof window === "undefined" ||
+    !("speechSynthesis" in window) ||
+    typeof window.SpeechSynthesisUtterance !== "function"
+  ) {
+    return Promise.resolve();
+  }
+  if (!text) return Promise.resolve();
+
+  const opts = options || {};
+  const shouldInterrupt = opts.interrupt !== false;
+
+  if (shouldInterrupt) window.speechSynthesis.cancel();
+
+  return new Promise((resolve) => {
+    const utterance = new SpeechSynthesisUtterance(String(text));
+    const voice = pickPreferredVoice();
+    if (voice) utterance.voice = voice;
+
+    utterance.lang = (voice && voice.lang) || "en-US";
+    utterance.rate = Number.isFinite(opts.rate) ? opts.rate : 0.85;
+    utterance.pitch = Number.isFinite(opts.pitch) ? opts.pitch : 0.9;
+    utterance.volume = Number.isFinite(opts.volume) ? opts.volume : 1;
+
+    utterance.onend = () => {
+      if (typeof opts.onend === "function") opts.onend();
+      resolve();
+    };
+    utterance.onerror = () => {
+      if (typeof opts.onend === "function") opts.onend();
+      resolve();
+    };
+    window.speechSynthesis.speak(utterance);
+  });
 };
+window.labSpeech.stop = function stop() {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+};
+window.labSpeech.cancel =
+  window.labSpeech.cancel ||
+  function cancel() {
+    window.labSpeech.stop();
+  };
+window.labSpeech.isActive = window.labSpeech.isActive || (() => false);
+window.labSpeech.say =
+  window.labSpeech.say ||
+  function say(text) {
+    if (!text) return Promise.resolve();
+    return window.labSpeech.speak(text);
+  };
+window.labSpeech.sayLines =
+  window.labSpeech.sayLines ||
+  function sayLines(lines) {
+    if (!Array.isArray(lines) || !lines.length) return Promise.resolve();
+    const [first] = lines;
+    if (!first) return Promise.resolve();
+    return window.labSpeech.speak(first);
+  };
 
 function updateRotorSpin() {
   if (!generatorRotor) return;
@@ -585,9 +708,10 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
   sharedControls.setMcbState = setMcbState;
   sharedControls.starterHandle = starterHandle;
 
-  if (mcbImg) {
-    mcbImg.style.cursor = "pointer";
-    mcbImg.addEventListener("click", function () {
+  const mcbLabel = document.querySelector(".mcb-label");
+  const mcbTargets = [mcbImg, mcbLabel].filter(Boolean);
+  if (mcbTargets.length) {
+    const handleMcbClick = function () {
       if (!connectionsVerified) {
         alert("Make and check the connections before turning on the MCB.");
         return;
@@ -597,6 +721,11 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       if (nextState) {
         stepGuide.complete("mcb");
       }
+    };
+
+    mcbTargets.forEach((el) => {
+      el.style.cursor = "pointer";
+      el.addEventListener("click", handleMcbClick);
     });
   }
 
@@ -693,6 +822,21 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
   const autoConnectBtn = findButtonByLabel("Auto Connect");
   if (autoConnectBtn) {
     autoConnectBtn.addEventListener("click", function () {
+      isAutoConnecting = true;
+      suppressAllAutoVoices = true;
+      suppressGuideDuringAutoConnect = true;
+
+      const guideWasActive =
+        typeof window.isGuideActive === "function" && window.isGuideActive();
+
+      if (window.labSpeech && typeof window.labSpeech.stop === "function") {
+        window.labSpeech.stop();
+      }
+
+      if (!guideWasActive) {
+        resetSpeakButtonUI();
+      }
+
       const runBatch = typeof jsPlumb.batch === "function" ? jsPlumb.batch.bind(jsPlumb) : (fn => fn());
 
       runBatch(function () {
@@ -730,6 +874,12 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
 
         console.log(`Auto Connect: required=${requiredConnections.size}, missing after retry=${missing.length}`);
       });
+
+      setTimeout(() => {
+        suppressAllAutoVoices = false;
+        suppressGuideDuringAutoConnect = false;
+        isAutoConnecting = false;
+      }, 0);
     });
   } else {
     console.error("Auto Connect button not found! Looking for '.pill-btn' with text 'Auto Connect'.");
@@ -737,335 +887,256 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
 
   // Speaking button - guided voice prompts for wiring
   (function initSpeakingGuidance() {
-    const speakingBtn = findButtonByLabel("Speaking") || findButtonByLabel("Start Speaking");
-    if (!speakingBtn) return;
-    const labelEl = speakingBtn.querySelector(".speak-btn__label");
-
-    const speechSupported =
-      typeof window !== "undefined" &&
-      "speechSynthesis" in window &&
-      typeof window.SpeechSynthesisUtterance === "function";
-
-    const originalLabel = (labelEl ? labelEl.textContent : speakingBtn.textContent).trim();
-    const highlightClass = "speak-glow";
-
-    if (!speechSupported) {
-      speakingBtn.disabled = true;
-      speakingBtn.title = "Speech synthesis is not available in this browser.";
-      return;
-    }
-
-    let speakingActive = false;
-    let voicesReady = false;
-    let speechPrimed = false;
-    let speechQueue = Promise.resolve();
-    let currentPromptIndex = -1;
-
-    function getTerminalLabel(pointId) {
-      return String(pointId || "").replace(/^point/i, "");
-    }
-
-    function clearHighlights() {
-      document.querySelectorAll(`.${highlightClass}`).forEach((el) => {
-        el.classList.remove(highlightClass);
-      });
-    }
-
-    function highlightTerminals(pointIds) {
-      clearHighlights();
-      pointIds.forEach((pointId) => {
-        const label = getTerminalLabel(pointId);
-        const pointEl = document.getElementById(pointId);
-        if (pointEl) pointEl.classList.add(highlightClass);
-        const btnEl = document.querySelector(`.point-${label}`);
-        if (btnEl) btnEl.classList.add(highlightClass);
-      });
-    }
-
-    function ensureVoicesReady() {
-      if (voicesReady) return Promise.resolve();
-      return new Promise((resolve) => {
-        const voices = window.speechSynthesis.getVoices();
-        if (voices && voices.length) {
-          voicesReady = true;
-          resolve();
-          return;
-        }
-        let done = false;
-        const cleanup = () => {
+    function waitForVoices(callback) {
+      if (!("speechSynthesis" in window)) {
+        callback();
+        return;
+      }
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length) {
+        callback();
+      } else {
+        const handler = () => {
           if (typeof window.speechSynthesis.removeEventListener === "function") {
-            window.speechSynthesis.removeEventListener("voiceschanged", onChanged);
-          } else if (window.speechSynthesis.onvoiceschanged === onChanged) {
+            window.speechSynthesis.removeEventListener("voiceschanged", handler);
+          } else {
             window.speechSynthesis.onvoiceschanged = null;
           }
+          callback();
         };
-        const finish = () => {
-          if (done) return;
-          done = true;
-          voicesReady = true;
-          cleanup();
-          resolve();
-        };
-        const onChanged = () => finish();
         if (typeof window.speechSynthesis.addEventListener === "function") {
-          window.speechSynthesis.addEventListener("voiceschanged", onChanged);
+          window.speechSynthesis.addEventListener("voiceschanged", handler);
         } else {
-          window.speechSynthesis.onvoiceschanged = onChanged;
+          window.speechSynthesis.onvoiceschanged = handler;
         }
-        setTimeout(finish, 700);
-      });
-    }
-
-    function pickVoice() {
-      const voices = window.speechSynthesis.getVoices();
-      if (!voices || !voices.length) return null;
-      return (
-        voices.find((v) => /ravi/i.test(v.name)) ||
-        voices.find((v) => (v.lang || "").toLowerCase().startsWith("en") && !/google/i.test(v.name)) ||
-        voices.find((v) => (v.lang || "").toLowerCase().startsWith("en")) ||
-        voices[0]
-      );
-    }
-
-    function stopSpeechOutput() {
-      try {
-        window.speechSynthesis.cancel();
-      } catch (_) {
-        // no-op
       }
     }
 
-    function speakOnce(text, { interrupt = false } = {}) {
-      if (!text) return Promise.resolve();
-      return ensureVoicesReady().then(() => {
-        if (interrupt) stopSpeechOutput();
-        return new Promise((resolve) => {
-          const utterance = new SpeechSynthesisUtterance(String(text));
-          const voice = pickVoice();
-          if (voice) utterance.voice = voice;
-          utterance.rate = 0.8;
-          utterance.pitch = 1;
-          utterance.onend = () => resolve();
-          utterance.onerror = () => resolve();
-          window.speechSynthesis.speak(utterance);
-        });
-      });
-    }
+    const speakBtn = document.querySelector(".speak-btn");
+    if (!speakBtn || !window.labSpeech) return;
 
-    function queueSpeech(lines, { interruptFirst = true } = {}) {
-      const list = Array.isArray(lines) ? lines.filter(Boolean) : [];
-      if (!list.length) return Promise.resolve();
-      speechQueue = speechQueue.then(() => {
-        if (interruptFirst) stopSpeechOutput();
-        const run = (idx) => {
-          if (idx >= list.length) return Promise.resolve();
-          return speakOnce(list[idx], { interrupt: idx === 0 && interruptFirst }).then(() => run(idx + 1));
+    let guideActive = false;
+    window.isGuideActive = () => guideActive;
+
+    let currentStep = 0;
+
+    const steps = requiredPairs
+      .map((pair) => pair.split("-"))
+      .filter((pair) => pair.length === 2)
+      .map(([from, to]) => {
+        const fromLabel = String(from).replace(/^point/i, "");
+        const toLabel = String(to).replace(/^point/i, "");
+        return {
+          from,
+          to,
+          text: `Connect point ${fromLabel} to point ${toLabel}.`
         };
-        return run(0);
       });
-      return speechQueue;
+
+    function speakCurrentStep() {
+      if (!guideActive) return;
+      const step = steps[currentStep];
+      if (!step) return;
+      window.labSpeech.speak(step.text);
     }
 
-    function primeSpeechEngine() {
-      if (speechPrimed) return Promise.resolve();
-      return ensureVoicesReady().then(
-        () =>
-          new Promise((resolve) => {
-            const primer = new SpeechSynthesisUtterance(".");
-            primer.volume = 0;
-            primer.onend = () => resolve();
-            primer.onerror = () => resolve();
-            window.speechSynthesis.speak(primer);
-          })
-      ).then(() => {
-        speechPrimed = true;
-      });
-    }
+    function getFirstIncompleteStepIndex() {
+      const currentConnections = jsPlumb.getAllConnections();
+      const connectedSet = new Set(
+        currentConnections.map((conn) => connectionKey(conn.sourceId, conn.targetId))
+      );
 
-    function getNextMissingIndex() {
-      const seen = getSeenConnectionKeys();
-      for (let i = 0; i < requiredPairs.length; i += 1) {
-        const [a, b] = requiredPairs[i].split("-");
-        if (!a || !b) continue;
-        if (!seen.has(connectionKey(a, b))) return i;
-      }
-      return -1;
-    }
-
-    function promptNext({ forceSpeak = false, reason = "next" } = {}) {
-      if (!speakingActive) return;
-
-      const idx = getNextMissingIndex();
-      if (idx < 0) {
-        clearHighlights();
-        if (currentPromptIndex !== -2 || forceSpeak) {
-          currentPromptIndex = -2;
-          queueSpeech(["All connections are complete. Now, click the Check button to verify the connections."], {
-            interruptFirst: true
-          });
+      for (let i = 0; i < steps.length; i += 1) {
+        const step = steps[i];
+        const key = connectionKey(step.from, step.to);
+        if (!connectedSet.has(key)) {
+          return i;
         }
+      }
+
+      return steps.length;
+    }
+
+    function activateGuideUI() {
+      guideActive = true;
+      speakBtn.classList.add("guiding");
+      speakBtn.setAttribute("aria-pressed", "true");
+      const label = speakBtn.querySelector(".speak-btn__label");
+      if (label) label.textContent = "Guiding...";
+    }
+
+    function speakGuide(text) {
+      const speechSupported =
+        typeof window !== "undefined" &&
+        "speechSynthesis" in window &&
+        typeof window.SpeechSynthesisUtterance === "function";
+      if (!speechSupported) {
+        stopGuide({ resetUI: true });
+        return;
+      }
+      window.labSpeech.speak(text);
+    }
+
+    function getLabStage() {
+      if (starterMoved) return "starter_on";
+      if (mcbOn) return "dc_on";
+      if (connectionsVerified) return "checked";
+      return "connections";
+    }
+
+    function startGuide() {
+      if (suppressGuideDuringAutoConnect || isAutoConnecting) return;
+
+      const stage = getLabStage();
+      switch (stage) {
+        case "checked":
+          activateGuideUI();
+          speakGuide("Connections are already verified. Now turn on the M C B.");
+          return;
+        case "dc_on":
+          activateGuideUI();
+          speakGuide("M C B is already on. Now move the starter handle from left to right.");
+          return;
+        case "starter_on":
+          activateGuideUI();
+          speakGuide("Starter is already on. Now select the number of bulbs from the lamp load.");
+          return;
+        default:
+          break;
+      }
+
+      const firstIncomplete = getFirstIncompleteStepIndex();
+      if (firstIncomplete >= steps.length) {
+        activateGuideUI();
+        speakGuide(
+          "All connections are completed. Now click on the Check button to confirm the connection."
+        );
         return;
       }
 
-      const [a, b] = requiredPairs[idx].split("-");
-      highlightTerminals([a, b]);
+      activateGuideUI();
+      currentStep = firstIncomplete;
 
-      if (forceSpeak || idx !== currentPromptIndex) {
-        currentPromptIndex = idx;
-        const from = getTerminalLabel(a);
-        const to = getTerminalLabel(b);
-        const line =
-          reason === "start"
-            ? `Start connecting the components, beginning with ${from} to ${to}.`
-            : reason === "retry"
-              ? `Please, connect ${from} to ${to}.`
-              : idx === 0
-                ? `Please connect ${from} to ${to}.`
-                : `Next, connect ${from} to ${to}.`;
-        queueSpeech([line], { interruptFirst: true });
-      }
-    }
-
-    function setSpeakingUiState(active) {
-      const nextLabel = active ? "Stop Speaking" : originalLabel;
-      if (labelEl) labelEl.textContent = nextLabel;
-      else speakingBtn.textContent = nextLabel;
-      speakingBtn.setAttribute("aria-pressed", active ? "true" : "false");
-      speakingBtn.setAttribute("aria-label", nextLabel);
-      speakingBtn.title = nextLabel;
-    }
-
-    function startSpeaking() {
-      if (speakingActive) return;
-      speakingActive = true;
-      currentPromptIndex = -1;
-      setSpeakingUiState(true);
-
-      // Avoid mixed modes: auto connect fights with guided prompts.
-      if (autoConnectBtn) autoConnectBtn.disabled = true;
-
-      speechQueue = Promise.resolve();
-      stopSpeechOutput();
-      if (window.jsPlumb) {
-        if (typeof jsPlumb.deleteEveryConnection === "function") {
-          jsPlumb.deleteEveryConnection();
-        } else if (typeof jsPlumb.getAllConnections === "function") {
-          jsPlumb.getAllConnections().forEach((c) => jsPlumb.deleteConnection(c));
-        }
-        if (typeof jsPlumb.repaintEverything === "function") {
-          jsPlumb.repaintEverything();
-        }
-      }
-      primeSpeechEngine().finally(() => {
-        queueSpeech(["Guided speaking started. Follow the highlighted terminals."], { interruptFirst: true }).finally(() => {
-          promptNext({ forceSpeak: true, reason: "start" });
-        });
-      });
-    }
-
-    function stopSpeaking() {
-      speakingActive = false;
-      setSpeakingUiState(false);
-      if (autoConnectBtn) autoConnectBtn.disabled = false;
-      clearHighlights();
-      stopSpeechOutput();
-      speechQueue = Promise.resolve();
-      currentPromptIndex = -1;
-    }
-
-    window.labSpeech.isActive = () => speakingActive;
-    window.labSpeech.say = (text, options = {}) => {
-      if (!speakingActive) return Promise.resolve();
-      return queueSpeech([text], options);
-    };
-    window.labSpeech.sayLines = (lines, options = {}) => {
-      if (!speakingActive) return Promise.resolve();
-      return queueSpeech(lines, options);
-    };
-    window.labSpeech.cancel = () => {
-      stopSpeechOutput();
-      speechQueue = Promise.resolve();
-    };
-
-    speakingBtn.addEventListener("click", () => {
-      if (speakingActive) stopSpeaking();
-      else startSpeaking();
-    });
-
-    // React to new connections while guidance is active.
-    jsPlumb.bind("connection", function (info) {
-      if (!speakingActive) return;
-
-      const key = connectionKey(info.sourceId, info.targetId);
-
-      if (!requiredConnections.has(key)) {
-        // Not part of the wiring plan: remove it and re-prompt.
-        if (info.connection) {
-          jsPlumb.deleteConnection(info.connection);
-          jsPlumb.repaintEverything();
-        }
-        queueSpeech(["Wrong connection. Try again."], { interruptFirst: true }).finally(() => {
-          promptNext({ forceSpeak: true, reason: "retry" });
-        });
-        return;
-      }
-
-      // Enforce order: only accept the currently prompted connection.
-      if (currentPromptIndex >= 0) {
-        const [expectedA, expectedB] = requiredPairs[currentPromptIndex].split("-");
-        const expectedKey = connectionKey(expectedA, expectedB);
-        if (key !== expectedKey) {
-          if (info.connection) {
-            jsPlumb.deleteConnection(info.connection);
-            jsPlumb.repaintEverything();
-          }
-          queueSpeech(["Incorrect connection. Try again."], { interruptFirst: true }).finally(() => {
-            highlightTerminals([expectedA, expectedB]);
-            promptNext({ forceSpeak: true, reason: "retry" });
-          });
+      waitForVoices(() => {
+        if (!("speechSynthesis" in window)) {
+          speakCurrentStep();
           return;
         }
+        const intro = new SpeechSynthesisUtterance("Lets connect the components.");
+        const voice = pickPreferredVoice();
+        if (voice) intro.voice = voice;
+        intro.lang = (voice && voice.lang) || "en-US";
+        intro.rate = 0.85;
+        intro.pitch = 0.9;
+        intro.volume = 1;
+
+        intro.onend = () => {
+          if (guideActive) speakCurrentStep();
+        };
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(intro);
+      });
+    }
+
+    function stopGuide({ resetUI = false } = {}) {
+      if (!guideActive && !resetUI) return;
+
+      guideActive = false;
+      currentStep = 0;
+
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
       }
 
-      // Correct/allowed connection: move on (skips any already-connected steps).
-      promptNext();
+      if (resetUI) {
+        resetSpeakButtonUI();
+      }
+    }
+
+    window.labSpeech.isActive = () => guideActive;
+    window.labSpeech.say = (text, options = {}) => {
+      if (!guideActive || !text) return Promise.resolve();
+      const interrupt = options.interruptFirst !== false;
+      return window.labSpeech.speak(text, { interrupt });
+    };
+    window.labSpeech.sayLines = (lines, options = {}) => {
+      if (!guideActive || !Array.isArray(lines) || !lines.length) return Promise.resolve();
+      const interrupt = options.interruptFirst !== false;
+      return window.labSpeech.speak(lines[0], { interrupt });
+    };
+    window.labSpeech.cancel = () => {
+      window.labSpeech.stop();
+    };
+
+    window.stopGuideSpeech = () => {
+      stopGuide({ resetUI: true });
+    };
+
+    speakBtn.addEventListener("click", () => {
+      if (guideActive) {
+        stopGuide({ resetUI: true });
+      } else {
+        startGuide();
+      }
     });
 
-    // If a required wire is removed during guidance, keep the prompt aligned.
+    jsPlumb.bind("connection", function (info) {
+      if (!guideActive) return;
+      if (suppressGuideDuringAutoConnect || isAutoConnecting) return;
+
+      const made = connectionKey(info.sourceId, info.targetId);
+      if (!requiredConnections.has(made)) {
+        const wrongA = info.sourceId.replace("point", "");
+        const wrongB = info.targetId.replace("point", "");
+        window.labSpeech.speak(
+          `Wrong connection. You connected ${wrongA} to ${wrongB}. Please follow the required connections.`
+        );
+        return;
+      }
+
+      currentStep = getFirstIncompleteStepIndex();
+      if (currentStep >= steps.length) {
+        speakGuide(
+          "Now all the connections are completed. Please click on the Check button to confirm the connections."
+        );
+        return;
+      }
+
+      speakCurrentStep();
+    });
+
     jsPlumb.bind("connectionDetached", function () {
-      if (!speakingActive) return;
-      promptNext({ forceSpeak: false });
+      if (!guideActive) return;
+      if (suppressGuideDuringAutoConnect || isAutoConnecting) return;
+      currentStep = Math.max(0, getFirstIncompleteStepIndex());
     });
-
-    // Reset should always stop speech and clear highlights.
-    const resetBtn = findButtonByLabel("Reset");
-    resetBtn?.addEventListener("click", stopSpeaking);
 
     window.addEventListener(CONNECTION_VERIFIED_EVENT, function () {
-      if (!speakingActive) return;
-      queueSpeech(["Connections verified. Click the M C B to turn it on."], { interruptFirst: true });
+      if (!guideActive) return;
+      window.labSpeech.speak("Connections verified. Click the M C B to turn it on.");
     });
 
     window.addEventListener(MCB_TURNED_ON_EVENT, function () {
-      if (!speakingActive) return;
-      queueSpeech(["Now, move the starter handle from left to right."], { interruptFirst: true });
+      if (!guideActive) return;
+      window.labSpeech.speak("Now, move the starter handle from left to right.");
     });
 
     window.addEventListener(STARTER_MOVED_EVENT, function () {
-      if (!speakingActive) return;
-      queueSpeech(["Now, select the number of bulbs from the lamp load."], { interruptFirst: true });
+      if (!guideActive) return;
+      window.labSpeech.speak("Now, select the number of bulbs from the lamp load.");
     });
 
     window.addEventListener(MCB_TURNED_OFF_EVENT, function () {
-      if (!speakingActive) return;
-      queueSpeech(["M C B is turned off. Turn it on to continue."], { interruptFirst: true });
+      if (!guideActive) return;
+      window.labSpeech.speak("M C B is turned off. Turn it on to continue.");
     });
   })();
 
   // Lock every point to its initial coordinates so resizing the window cannot drift them
   const pinnedSelectors = [
     ".point",
-    ".point-R", ".point-B", ".point-L", ".point-F", ".point-A",
+    ".point-R", ".point-B", ".point-L", ".point-A", ".point-F",
     ".point-C", ".point-D", ".point-E", ".point-G", ".point-H", ".point-I", ".point-J", ".point-K",
     ".point-A1", ".point-Z1", ".point-A2", ".point-Z2", ".point-A3", ".point-Z3", ".point-A4", ".point-Z4",
     ".point-L1", ".point-L2"
@@ -1110,14 +1181,14 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
  
 const NEEDLE_TRANSFORM_TRANSLATE = "translate(-50%, -82.5%)";
 
-// Calibrated against the bundled meter artwork.
-const AMMETER_MIN_ANGLE = -76;
+// Calibrated for the 0-30 A ammeters and 0-410 V voltmeters used in this lab.
+const AMMETER_MIN_ANGLE = -73.4;
 const AMMETER_MID_ANGLE = 0;
-const AMMETER_MAX_ANGLE = 76;
+const AMMETER_MAX_ANGLE = 91.4;
 
-const VOLTMETER_MIN_ANGLE = -49;
+const VOLTMETER_MIN_ANGLE = -70.6;
 const VOLTMETER_MID_ANGLE = 0;
-const VOLTMETER_MAX_ANGLE = 49;
+const VOLTMETER_MAX_ANGLE = 86.6;
 
 function clamp(val, min, max) {
   return Math.min(Math.max(val, min), max);
@@ -1137,10 +1208,10 @@ function valueToMeterAngle(value, { minValue, midValue, maxValue, minAngle, midA
 }
 
 function currentToAngle(currentValue) {
-  // Ammeter artwork: 0–30 A with 16 at top center
+  // Ammeter artwork: 0-30 A with 15 at top center
   return valueToMeterAngle(currentValue, {
     minValue: 0,
-    midValue: 16,
+    midValue: 15,
     maxValue: 30,
     minAngle: AMMETER_MIN_ANGLE,
     midAngle: AMMETER_MID_ANGLE,
@@ -1149,7 +1220,7 @@ function currentToAngle(currentValue) {
 }
 
 function voltageToAngle(voltageValue) {
-  // Voltmeter artwork: 0–410 V with 180 at top center
+  // Voltmeter artwork: 0-410 V with 180 at top center (compressed right span).
   return valueToMeterAngle(voltageValue, {
     minValue: 0,
     midValue: 180,
@@ -1195,6 +1266,11 @@ function voltageToAngle(voltageValue) {
   const voltmeter1Readings = [225, 225, 225, 225, 225, 225, 225, 225, 225, 225];
   const ammeter2Readings = [1.2, 2.8, 3.2, 3.6, 5.5, 7, 8.1, 10.2, 11, 12.7];
   const voltmeter2Readings = [220, 212, 208, 205, 200, 195, 189, 184, 179, 176];
+  // Optional manual needle angles (degrees) per bulb index; edit as needed.
+  const ammeter1ManualAngles = [-62, -60.4, -50.1, -47.5, -42.0, -32.1, -26.0, -15.9, -6.3, 2.8];
+  const ammeter2ManualAngles = [-69.1, -59.2, -57.0, -55.9, -49.6, -45.4, -37, -28.0, -27, -18];
+  const voltmeter1ManualAngles = [1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9, 1.9];
+  const voltmeter2ManualAngles = [0.3, -5.9, -7.5, -7.7, -7.9, -7.8, -7.4, -6.8, -14.9, -15.7];
 
   const readingsRecorded = [];
   let selectedIndex = -1;
@@ -1255,6 +1331,11 @@ function voltageToAngle(voltageValue) {
     el.style.transform = `${NEEDLE_TRANSFORM_TRANSLATE} rotate(${angleDeg}deg)`;
   }
 
+  function resolveAngle(manualAngles, idx, fallbackAngle) {
+    const manual = manualAngles && Number.isFinite(manualAngles[idx]) ? manualAngles[idx] : null;
+    return Number.isFinite(manual) ? manual : fallbackAngle;
+  }
+
   function updateBulbs(count) {
     bulbs.forEach((bulb, idx) => {
       const isOn = idx < count;
@@ -1277,10 +1358,22 @@ function voltageToAngle(voltageValue) {
       return;
     }
 
-    setNeedleRotation(needle1, currentToAngle(ammeter1Readings[safeIdx]));
-    setNeedleRotation(needle2, currentToAngle(ammeter2Readings[safeIdx]));
-    setNeedleRotation(needle3, voltageToAngle(voltmeter1Readings[safeIdx]));
-    setNeedleRotation(needle4, voltageToAngle(voltmeter2Readings[safeIdx]));
+    setNeedleRotation(
+      needle1,
+      resolveAngle(ammeter1ManualAngles, safeIdx, currentToAngle(ammeter1Readings[safeIdx]))
+    );
+    setNeedleRotation(
+      needle2,
+      resolveAngle(ammeter2ManualAngles, safeIdx, currentToAngle(ammeter2Readings[safeIdx]))
+    );
+    setNeedleRotation(
+      needle3,
+      resolveAngle(voltmeter1ManualAngles, safeIdx, voltageToAngle(voltmeter1Readings[safeIdx]))
+    );
+    setNeedleRotation(
+      needle4,
+      resolveAngle(voltmeter2ManualAngles, safeIdx, voltageToAngle(voltmeter2Readings[safeIdx]))
+    );
   }
 
   /* ===== everything below remains SAME as your current code ===== */
@@ -1333,7 +1426,7 @@ function voltageToAngle(voltageValue) {
         stepGuide.complete("graph");
         updateGraphControls();
         speak(
-          "The graph of terminal voltage versus load current has been plotted. Your experiment is now complete. You may view the generated report by clicking the Report button."
+          "The graph of terminal voltage versus load current has been plotted. Your experiment is now complete. You may view the report by clicking the Report button, then use Print to print the page or Reset to start again."
         );
       })
       .catch(() => {
@@ -1604,6 +1697,9 @@ tr:nth-child(even) { background-color: #f8fbff; }
       reportWindow.document.write(html);
       reportWindow.document.close();
       reportWindow.focus();
+      speak(
+        "Report opened in a new tab. You can print it from the report window, or use Reset to start again."
+      );
     } catch (err) {
       try {
         const blob = new Blob([html], { type: "text/html" });
@@ -1649,6 +1745,11 @@ tr:nth-child(even) { background-color: #f8fbff; }
     }
 
     const load = selectedIndex + 1;
+    if (readingsRecorded.some((reading) => reading.load === load)) {
+      speakOrAlert("This bulb load already exists in the table. Choose a different load.");
+      readingArmed = false;
+      return;
+    }
     readingsRecorded.push({
       load,
       current: ammeter2Readings[selectedIndex],
@@ -1701,8 +1802,33 @@ tr:nth-child(even) { background-color: #f8fbff; }
   }
 
   function resetObservations() {
-    if (window.labSpeech && typeof window.labSpeech.cancel === "function") {
-      window.labSpeech.cancel();
+    const wasGuiding =
+      typeof window.isGuideActive === "function" && window.isGuideActive();
+
+    if (window.labSpeech && typeof window.labSpeech.stop === "function") {
+      window.labSpeech.stop();
+    }
+
+    const speechSupported =
+      typeof window !== "undefined" &&
+      "speechSynthesis" in window &&
+      typeof window.SpeechSynthesisUtterance === "function";
+
+    if (wasGuiding && speechSupported && window.labSpeech && typeof window.labSpeech.speak === "function") {
+      window.labSpeech.speak("Experiment reset. You can start again.", {
+        onend: () => {
+          if (typeof window.stopGuideSpeech === "function") {
+            window.stopGuideSpeech();
+          } else {
+            resetSpeakButtonUI();
+          }
+        }
+      });
+    } else {
+      resetSpeakButtonUI();
+      if (typeof window.stopGuideSpeech === "function") {
+        window.stopGuideSpeech();
+      }
     }
 
     if (window.jsPlumb) {
@@ -1770,7 +1896,14 @@ tr:nth-child(even) { background-color: #f8fbff; }
   }
 
   if (resetBtn) resetBtn.addEventListener("click", resetObservations);
-  if (printBtn) printBtn.addEventListener("click", () => window.print());
+  if (printBtn) {
+    printBtn.addEventListener("click", () => {
+      if (speechIsActive()) {
+        window.labSpeech.speak("Opening the print dialog.");
+      }
+      window.print();
+    });
+  }
   if (reportBtn) {
     reportBtn.addEventListener("click", generateReport);
     reportBtn.disabled = true;
@@ -1932,24 +2065,44 @@ tr:nth-child(even) { background-color: #f8fbff; }
       tooltipLayer.classList.remove("show");
     }
 
-    document.addEventListener("mouseover", function (event) {
-      const found = findEntry(event.target);
-      if (!found) return;
-      if (activeTarget === found.match) return;
-      activeTarget = found.match;
-      showTip(found.text, event);
-    });
+      function attachLeaveHandler(target) {
+        target.addEventListener(
+          "mouseleave",
+          () => {
+            if (activeTarget === target) {
+              activeTarget = null;
+              hideTip();
+            }
+          },
+          { once: true }
+        );
+      }
 
-    document.addEventListener("mousemove", function (event) {
-      if (activeTarget) moveTip(event);
-    });
+      document.addEventListener("click", function (event) {
+        const found = findEntry(event.target);
+        if (!found) {
+          if (activeTarget) {
+            activeTarget = null;
+            hideTip();
+          }
+          return;
+        }
+        if (activeTarget === found.match) {
+          activeTarget = null;
+          hideTip();
+          return;
+        }
+        activeTarget = found.match;
+        showTip(found.text, event);
+        attachLeaveHandler(activeTarget);
+      });
 
-    document.addEventListener("mouseout", function (event) {
-      if (!activeTarget) return;
-      if (event.relatedTarget && activeTarget.contains(event.relatedTarget)) return;
-      activeTarget = null;
-      hideTip();
-    });
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          activeTarget = null;
+          hideTip();
+        }
+      });
   }
 
   if (document.readyState === "loading") {

@@ -429,19 +429,27 @@ h3 {
 
 /* ---- NEEDLES (responsive + consistent) ---- */
 .meter-needle1,
-.meter-needle2,
-.meter-needle3,
-.meter-needle4 {
+.meter-needle2 {
   position: absolute;
   width: clamp(30px, 22%, 60px);
   left: 50%;
-  top: 54%;
+  top: 52%;
   transform-origin: 50% 82.5%;
   transform: translate(-50%, -82.5%) rotate(0deg);
   pointer-events: none;
   z-index: 5;
 }
-
+.meter-needle3,
+.meter-needle4  {
+  position: absolute;
+  width: clamp(30px, 22%, 60px);
+  left: 50%;
+  top: 53%;
+  transform-origin: 50% 82.5%;
+  transform: translate(-50%, -82.5%) rotate(0deg);
+  pointer-events: none;
+  z-index: 5;
+}
 .meter-needle1,
 .meter-needle2 {
   transform: translate(-50%, -82.5%) rotate(-76deg);
@@ -450,7 +458,7 @@ h3 {
 /* Voltmeter artwork has a lower pivot point */
 .meter-needle3,
 .meter-needle4 {
-  top: 67%;
+   
   transform: translate(-50%, -82.5%) rotate(-49deg);
 }
 
@@ -459,7 +467,7 @@ h3 {
 .meter-needle3 img,
 .meter-needle4 img {
   width: 100%;
-  height: auto;
+  height: 60px;
   display: block;
   object-fit: contain;
   border-radius: 0;
