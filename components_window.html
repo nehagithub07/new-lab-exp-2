@@ -9,13 +9,22 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            
         }
         body {
+            
             min-height: 100vh;
             width: 100%;
             background: radial-gradient(circle at top, #e3ddcf 0%, #d2c9bb 55%, #c8bfb1 100%);
             color: #2e2a24;
             font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+        }
+        :root {
+            --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+            --ease-in: cubic-bezier(0.32, 0, 0.67, 0);
+            --dur-fast: 180ms;
+            --dur-mid: 360ms;
+            --dur-slow: 600ms;
         }
         .component-shell {
             display: flex;
@@ -34,12 +43,36 @@
             flex-direction: column;
             gap: 12px;
             box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7), 0 10px 20px rgba(60, 54, 46, 0.18);
+            animation: panelIn var(--dur-slow) var(--ease-out) both;
         }
         .sidebar-title {
-            font-size: 18px;
+            position: relative;
+            width: auto;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid #c6baab;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f6f1e8, #dacdbd);
+            font-size: 16px;
             font-weight: 700;
-            letter-spacing: 0.02em;
-            color: #3a3125;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #2d3f4c;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7), 0 6px 12px rgba(60, 54, 46, 0.14);
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+            overflow: hidden;
+        }
+        .sidebar-title::before {
+            content: "";
+            position: absolute;
+            left: 12px;
+            bottom: 7px;
+            width: 28px;
+            height: 3px;
+            border-radius: 999px;
+            opacity: 0.65;
         }
         .component-thumbs {
             display: flex;
@@ -60,6 +93,7 @@
             text-align: left;
             box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 6px 12px rgba(60, 54, 46, 0.12);
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
+            animation: thumbIn var(--dur-mid) var(--ease-out) both;
         }
         .thumb-item:hover {
             border-color: #8aa0b1;
@@ -93,6 +127,8 @@
             align-items: center;
             justify-content: center;
             gap: 18px;
+            animation: panelIn var(--dur-slow) var(--ease-out) both;
+            animation-delay: 120ms;
         }
         .component-card {
             width: min(780px, 100%);
@@ -104,6 +140,36 @@
             gap: 24px;
             align-items: center;
             box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.7), 0 18px 30px rgba(60, 54, 46, 0.22);
+            transition: opacity var(--dur-fast) var(--ease-in), transform var(--dur-fast) var(--ease-in);
+            will-change: transform, opacity;
+        }
+        .component-card.is-fading-out {
+            opacity: 0;
+            transform: translateY(6px) scale(0.99);
+        }
+        .component-card.is-fading-out .component-media {
+            transform: scale(0.95) rotate(-1.2deg);
+            opacity: 0.8;
+        }
+        .component-card.is-fading-out .component-content {
+            transform: translateY(8px);
+            opacity: 0.7;
+        }
+        .component-card.is-animating {
+            animation: cardSwap var(--dur-slow) var(--ease-out);
+        }
+        .component-card.is-animating .component-media {
+            animation: mediaPop var(--dur-mid) var(--ease-out) both;
+        }
+        .component-card.is-animating .component-content {
+            animation: contentShift var(--dur-mid) var(--ease-out) both;
+        }
+        .component-card.is-animating .component-title {
+            animation: textRise var(--dur-mid) var(--ease-out) both;
+        }
+        .component-card.is-animating .component-definition {
+            animation: textRise var(--dur-mid) var(--ease-out) both;
+            animation-delay: 60ms;
         }
         .component-media {
             width: 220px;
@@ -116,6 +182,7 @@
             justify-content: center;
             padding: 16px;
             box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6), 0 10px 16px rgba(60, 54, 46, 0.18);
+            transition: transform var(--dur-fast) var(--ease-in), opacity var(--dur-fast) var(--ease-in);
         }
         .component-media img {
             max-width: 100%;
@@ -127,6 +194,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            transition: transform var(--dur-fast) var(--ease-in), opacity var(--dur-fast) var(--ease-in);
         }
         .component-title {
             font-size: 24px;
@@ -170,6 +238,79 @@
             font-weight: 700;
             color: #2f5a78;
         }
+        @keyframes panelIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes thumbIn {
+            from {
+                opacity: 0;
+                transform: translateX(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes cardSwap {
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes mediaPop {
+            from {
+                opacity: 0.5;
+                transform: scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        @keyframes textRise {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes contentShift {
+            from {
+                transform: translateX(10px);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+            .component-card.is-fading-out {
+                opacity: 1;
+                transform: none;
+            }
+            .component-card.is-fading-out .component-media,
+            .component-card.is-fading-out .component-content {
+                opacity: 1;
+                transform: none;
+            }
+        }
         @media (max-width: 900px) {
             .component-shell {
                 flex-direction: column;
@@ -195,7 +336,7 @@
 <body>
     <div class="component-shell">
         <aside class="component-sidebar">
-            <div class="sidebar-title">Components</div>
+            <div class="sidebar-title">COMPONENTS</div>
             <div class="component-thumbs" id="componentThumbs"></div>
         </aside>
 
@@ -277,6 +418,7 @@
         ];
 
         const thumbsEl = document.getElementById("componentThumbs");
+        const cardEl = document.getElementById("componentCard");
         const imageEl = document.getElementById("componentImage");
         const titleEl = document.getElementById("componentTitle");
         const definitionEl = document.getElementById("componentDefinition");
@@ -285,6 +427,7 @@
         const nextBtn = document.getElementById("nextComponent");
 
         let currentIndex = 0;
+        let swapTimer = null;
 
         function buildThumbs() {
             thumbsEl.innerHTML = "";
@@ -293,6 +436,7 @@
                 btn.type = "button";
                 btn.className = "thumb-item";
                 btn.dataset.index = String(index);
+                btn.style.animationDelay = `${index * 40}ms`;
 
                 const img = document.createElement("img");
                 img.src = component.image;
@@ -320,24 +464,51 @@
             });
         }
 
-        function setActive(index) {
-            const safeIndex = Math.max(0, Math.min(components.length - 1, index));
-            currentIndex = safeIndex;
-            const component = components[currentIndex];
-
+        function applyComponent(component) {
             imageEl.src = component.image;
             imageEl.alt = component.name;
             titleEl.textContent = component.name;
             definitionEl.textContent = component.description;
+        }
 
+        function restartCardAnimation() {
+            cardEl.classList.remove("is-animating");
+            void cardEl.offsetWidth;
+            cardEl.classList.add("is-animating");
+        }
+
+        function setActive(index, options = {}) {
+            const safeIndex = Math.max(0, Math.min(components.length - 1, index));
+            currentIndex = safeIndex;
             updateControls();
+
+            if (swapTimer) {
+                clearTimeout(swapTimer);
+                swapTimer = null;
+            }
+
+            if (options.immediate) {
+                cardEl.classList.remove("is-fading-out");
+                applyComponent(components[currentIndex]);
+                restartCardAnimation();
+                return;
+            }
+
+            cardEl.classList.remove("is-animating");
+            cardEl.classList.add("is-fading-out");
+
+            swapTimer = setTimeout(() => {
+                applyComponent(components[currentIndex]);
+                cardEl.classList.remove("is-fading-out");
+                restartCardAnimation();
+            }, 160);
         }
 
         prevBtn.addEventListener("click", () => setActive(currentIndex - 1));
         nextBtn.addEventListener("click", () => setActive(currentIndex + 1));
 
         buildThumbs();
-        setActive(0);
+        setActive(0, { immediate: true });
     </script>
 </body>
 </html>
