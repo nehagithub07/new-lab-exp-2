@@ -165,11 +165,11 @@
             animation: contentShift var(--dur-mid) var(--ease-out) both;
         }
         .component-card.is-animating .component-title {
-            animation: textRise var(--dur-mid) var(--ease-out) both;
+            animation: titleReveal var(--dur-mid) var(--ease-out) both;
         }
         .component-card.is-animating .component-definition {
-            animation: textRise var(--dur-mid) var(--ease-out) both;
-            animation-delay: 60ms;
+            animation: paragraphReveal var(--dur-mid) var(--ease-out) both;
+            animation-delay: 80ms;
         }
         .component-media {
             width: 220px;
@@ -200,11 +200,31 @@
             font-size: 24px;
             font-weight: 700;
             color: #2f5a78;
+            transition: transform var(--dur-fast) var(--ease-in), opacity var(--dur-fast) var(--ease-in);
         }
         .component-definition {
             font-size: 15px;
-            line-height: 1.6;
+            line-height: 1.7;
+            text-align: justify;
             color: #3c362e;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(231, 222, 208, 0.7));
+            border: 1px solid rgba(200, 187, 172, 0.7);
+            border-left: 3px solid #2f5a78;
+            border-radius: 12px;
+            padding: 12px 14px;
+            max-width: 520px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 18px rgba(60, 54, 46, 0.12);
+            transition: transform var(--dur-fast) var(--ease-in), opacity var(--dur-fast) var(--ease-in), background var(--dur-fast) var(--ease-in), border-color var(--dur-fast) var(--ease-in), box-shadow var(--dur-fast) var(--ease-in);
+        }
+        .component-card.is-fading-out .component-title,
+        .component-card.is-fading-out .component-definition {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .component-card.is-fading-out .component-definition {
+            background: rgba(255, 255, 255, 0.35);
+            border-color: rgba(200, 187, 172, 0);
+            box-shadow: none;
         }
         .component-controls {
             display: flex;
@@ -232,6 +252,12 @@
         .control-btn:not(:disabled):hover {
             transform: translateY(-1px);
             box-shadow: 0 6px 12px rgba(47, 90, 120, 0.2);
+        }
+        .control-btn:not(:disabled):active {
+            background: linear-gradient(145deg, #24465e, #1a3242);
+            border-color: #1a3242;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            transform: translateY(0);
         }
         .component-index {
             font-size: 14px;
@@ -278,10 +304,20 @@
                 transform: scale(1);
             }
         }
-        @keyframes textRise {
+        @keyframes titleReveal {
             from {
                 opacity: 0;
-                transform: translateY(6px);
+                transform: translateY(8px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes paragraphReveal {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
             }
             to {
                 opacity: 1;
@@ -309,6 +345,16 @@
             .component-card.is-fading-out .component-content {
                 opacity: 1;
                 transform: none;
+            }
+            .component-card.is-fading-out .component-title,
+            .component-card.is-fading-out .component-definition {
+                opacity: 1;
+                transform: none;
+            }
+            .component-card.is-fading-out .component-definition {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(231, 222, 208, 0.7));
+                border-color: rgba(200, 187, 172, 0.7);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 18px rgba(60, 54, 46, 0.12);
             }
         }
         @media (max-width: 900px) {
