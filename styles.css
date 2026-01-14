@@ -1118,6 +1118,11 @@ h3 {
   overflow: hidden;
 }
 
+.graph-canvas.is-plotting {
+  background-image: none;
+  overflow: visible;
+}
+
 .graph-canvas::before,
 .graph-canvas::after {
   content: "";

@@ -1246,6 +1246,7 @@ function voltageToAngle(voltageValue) {
   const graphBars = document.getElementById("graphBars");
   const graphPlot = document.getElementById("graphPlot");
   const graphSection = document.querySelector(".graph-section");
+  const graphCanvas = document.querySelector(".graph-canvas");
 
   const addTableBtn =
     findButtonByLabel("Add Table") ||
@@ -1413,14 +1414,15 @@ function voltageToAngle(voltageValue) {
         const layout = {
           title: { text: "<b>Voltage (V) vs Load Current (A)</b>" },
           margin: { l: 60, r: 20, t: 40, b: 50 },
-          xaxis: { title: "<b>Load Current (A)</b>" },
-          yaxis: { title: "<b>Voltage (V)</b>" },
+          xaxis: { title: "<b>Load Current (A)</b>", gridcolor: "rgba(0, 0, 0, 0.07)" },
+          yaxis: { title: "<b>Voltage (V)</b>", gridcolor: "rgba(0, 0, 0, 0.07)" },
           paper_bgcolor: "rgba(0,0,0,0)",
           plot_bgcolor: "rgba(0,0,0,0)"
         };
 
         if (graphBars) graphBars.style.display = "none";
         graphPlot.style.display = "block";
+        if (graphCanvas) graphCanvas.classList.add("is-plotting");
 
         window.Plotly.newPlot(graphPlot, [trace], layout, { displaylogo: false, responsive: true });
         stepGuide.complete("graph");
@@ -1855,6 +1857,7 @@ tr:nth-child(even) { background-color: #f8fbff; }
       graphPlot.innerHTML = "";
       graphPlot.style.display = "none";
     }
+    if (graphCanvas) graphCanvas.classList.remove("is-plotting");
 
     connectionsVerified = false;
     starterMoved = false;
