@@ -1406,6 +1406,122 @@ h3 {
 }
 
 /* =========================
+   COMPONENT INTRO MODAL
+========================= */
+.component-intro {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 2vw, 24px);
+  z-index: 5200;
+  opacity: 1;
+  transition: opacity 0.16s ease;
+}
+
+.component-intro.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.component-intro__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.component-intro__card {
+  position: relative;
+  width: min(920px, 96vw);
+  max-height: 84vh;
+  background: #fdf7e7;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  transform: translateY(0);
+  transition: transform 0.16s ease;
+}
+
+.component-intro.is-hidden .component-intro__card {
+  transform: translateY(10px);
+}
+
+.component-intro__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.component-intro__title {
+  margin: 0;
+  font-size: clamp(1rem, 1.6vw, 1.4rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2c1a0a;
+}
+
+.component-intro__skip {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: #1b6fb8;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #0f4c82, 0 10px 18px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.component-intro__skip:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 0 #0f4c82, 0 6px 12px rgba(0, 0, 0, 0.18);
+}
+
+.component-intro__caption {
+  margin: 0;
+  color: #3b2f24;
+  font-size: 0.95rem;
+}
+
+.component-intro__frame {
+  flex: 1;
+  min-height: 320px;
+  height: clamp(320px, 54vh, 480px);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8f2e7;
+ 
+}
+
+.component-intro__frame iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+ 
+}
+
+@media (max-width: 720px) {
+  .component-intro__card {
+    width: min(98vw, 820px);
+    max-height: 92vh;
+  }
+
+  .component-intro__frame {
+    min-height: 280px;
+  }
+}
+
+/* =========================
    INSTRUCTION MODAL
 ========================= */
 .instruction-overlay {

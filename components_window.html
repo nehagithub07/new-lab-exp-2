@@ -11,8 +11,11 @@
             padding: 0;
             
         }
+        html,
         body {
-            
+            height: 100%;
+        }
+        body {
             min-height: 100vh;
             width: 100%;
             background: radial-gradient(circle at top, #e3ddcf 0%, #d2c9bb 55%, #c8bfb1 100%);
@@ -377,6 +380,104 @@
                 justify-content: center;
             }
         }
+
+        body.embed {
+            min-height: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent;
+        }
+        body.embed .component-shell {
+            min-height: 100%;
+            height: 100%;
+            padding: 12px;
+            gap: 14px;
+        }
+        body.embed .component-sidebar {
+            width: 220px;
+            min-width: 180px;
+            padding: 12px;
+        }
+        body.embed .component-thumbs {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+        body.embed .component-viewer {
+            justify-content: flex-start;
+            align-items: stretch;
+            overflow: auto;
+            min-height: 0;
+            min-width: 0;
+            padding-right: 6px;
+        }
+        body.embed .component-card {
+            width: 100%;
+            padding: 16px;
+            gap: 16px;
+            opacity: 1;
+            transform: none;
+        }
+        body.embed .component-card.is-fading-out,
+        body.embed .component-card.is-fading-out .component-media,
+        body.embed .component-card.is-fading-out .component-content,
+        body.embed .component-card.is-fading-out .component-title,
+        body.embed .component-card.is-fading-out .component-definition {
+            opacity: 1;
+            transform: none;
+        }
+        body.embed .component-media {
+            width: 170px;
+            height: 170px;
+            padding: 12px;
+        }
+        body.embed .component-definition {
+            max-width: none;
+        }
+        body.embed .component-controls {
+            justify-content: flex-start;
+        }
+
+        @media (max-width: 900px) {
+            body.embed .component-shell {
+                flex-direction: row;
+                padding: 12px;
+            }
+            body.embed .component-sidebar {
+                width: 220px;
+            }
+            body.embed .component-card {
+                flex-direction: row;
+                align-items: center;
+            }
+            body.embed .component-media {
+                width: 170px;
+                height: 170px;
+            }
+            body.embed .component-controls {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 720px) {
+            body.embed .component-shell {
+                flex-direction: column;
+            }
+            body.embed .component-sidebar {
+                width: 100%;
+            }
+            body.embed .component-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            body.embed .component-media {
+                width: 100%;
+                height: 180px;
+            }
+            body.embed .component-controls {
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -406,6 +507,11 @@
     </div>
 
     <script>
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("embed")) {
+            document.body.classList.add("embed");
+        }
+
         const components = [
             {
                 key: "mcb",

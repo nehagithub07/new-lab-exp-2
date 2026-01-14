@@ -253,6 +253,40 @@ const stepGuide = (() => {
   return { complete, reset, showCurrent, hide };
 })();
 
+(function initComponentIntro() {
+  const intro = document.getElementById("componentIntro");
+  if (!intro) return;
+
+  const skipBtn = intro.querySelector(".component-intro__skip");
+  const closeTargets = intro.querySelectorAll("[data-component-intro-close]");
+
+  function open() {
+    intro.classList.remove("is-hidden");
+    if (stepGuide && typeof stepGuide.hide === "function") {
+      stepGuide.hide();
+    }
+    skipBtn?.focus?.();
+  }
+
+  function close() {
+    intro.classList.add("is-hidden");
+    if (stepGuide && typeof stepGuide.showCurrent === "function") {
+      stepGuide.showCurrent();
+    }
+  }
+
+  closeTargets.forEach((target) => target.addEventListener("click", close));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") close();
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", open, { once: true });
+  } else {
+    open();
+  }
+})();
+
 const sharedControls = {
   updateControlLocks: () => {},
   setMcbState: () => {},
@@ -1414,7 +1448,12 @@ function voltageToAngle(voltageValue) {
         const layout = {
           title: { text: "<b>Voltage (V) vs Load Current (A)</b>" },
           margin: { l: 60, r: 20, t: 40, b: 50 },
-          xaxis: { title: "<b>Load Current (A)</b>", gridcolor: "rgba(0, 0, 0, 0.07)" },
+          xaxis: {
+            title: "<b>Load Current (A)</b>",
+            gridcolor: "rgba(0, 0, 0, 0.07)",
+            tickmode: "array",
+            tickvals: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+          },
           yaxis: { title: "<b>Voltage (V)</b>", gridcolor: "rgba(0, 0, 0, 0.07)" },
           paper_bgcolor: "rgba(0,0,0,0)",
           plot_bgcolor: "rgba(0,0,0,0)"
@@ -1675,7 +1714,11 @@ tr:nth-child(even) { background-color: #f8fbff; }
         var trace = { x: currents, y: voltages, type: 'scatter', mode: 'lines+markers', name: 'V vs I', line: { color: '#3498db' } };
         var layout = {
           title: { text: 'Terminal Voltage vs Load Current' },
-          xaxis: { title: 'Load Current (A)' },
+          xaxis: {
+            title: 'Load Current (A)',
+            tickmode: 'array',
+            tickvals: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+          },
           yaxis: { title: 'Voltage (V)' },
           margin: { t: 60, r: 20, l: 60, b: 60 }
         };
