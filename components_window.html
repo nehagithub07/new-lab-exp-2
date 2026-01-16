@@ -404,15 +404,15 @@
             overflow-y: auto;
         }
         body.embed .component-viewer {
-            justify-content: flex-start;
-            align-items: stretch;
+            justify-content: center;
+            align-items: center;
             overflow: auto;
             min-height: 0;
             min-width: 0;
             padding-right: 6px;
         }
         body.embed .component-card {
-            width: 100%;
+            width: min(720px, 100%);
             padding: 16px;
             gap: 16px;
             opacity: 1;
@@ -435,7 +435,7 @@
             max-width: none;
         }
         body.embed .component-controls {
-            justify-content: flex-start;
+            justify-content: center;
         }
 
         @media (max-width: 900px) {
@@ -455,7 +455,7 @@
                 height: 170px;
             }
             body.embed .component-controls {
-                justify-content: flex-start;
+                justify-content: center;
             }
         }
 

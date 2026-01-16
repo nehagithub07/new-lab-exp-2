@@ -2247,3 +2247,59 @@ tr:nth-child(even) { background-color: #f8fbff; }
     setup();
   }
 })();
+// Components popup (auto on load + open from icon)
+(function () {
+  const modal = document.getElementById("componentsModal");
+  if (!modal) return;
+
+  const closeEls = modal.querySelectorAll("[data-components-close]");
+  const skipBtn = modal.querySelector("[data-components-skip]");
+  const openBtns = document.querySelectorAll("[data-open-components]");
+
+  // If you want "Skip" to only close for now (not remember), remove STORAGE_KEY lines.
+  const STORAGE_KEY = "vl_components_skipped";
+
+  function openComponentsModal({ force = false } = {}) {
+    if (!force) {
+      try {
+        if (localStorage.getItem(STORAGE_KEY) === "1") return;
+      } catch (e) {}
+    }
+    modal.classList.remove("is-hidden");
+    document.body.classList.add("is-modal-open");
+  }
+
+  function closeComponentsModal({ skip = false } = {}) {
+    modal.classList.add("is-hidden");
+    document.body.classList.remove("is-modal-open");
+
+    if (skip) {
+      try {
+        localStorage.setItem(STORAGE_KEY, "1");
+      } catch (e) {}
+    }
+  }
+
+  // Auto open when page loads
+  window.addEventListener("load", () => {
+    setTimeout(() => openComponentsModal(), 250);
+  });
+
+  // Open via icons/buttons
+  openBtns.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      openComponentsModal({ force: true }); // even if skipped
+    });
+  });
+
+  // Close buttons + backdrop
+  closeEls.forEach((el) => el.addEventListener("click", () => closeComponentsModal()));
+  if (skipBtn) skipBtn.addEventListener("click", () => closeComponentsModal({ skip: true }));
+
+  // ESC key to close
+  document.addEventListener("keydown", (e) => {
+    if (modal.classList.contains("is-hidden")) return;
+    if (e.key === "Escape") closeComponentsModal();
+  });
+})();

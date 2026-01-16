@@ -1,1 +1,13 @@
-hi
+ <div class="component-intro is-hidden" id="componentIntro" role="dialog" aria-modal="true" aria-labelledby="componentIntroTitle">
+    <div class="component-intro__backdrop" data-component-intro-close></div>
+    <div class="component-intro__card" role="document">
+      <div class="component-intro__header">
+        <h2 class="component-intro__title" id="componentIntroTitle">Component Window</h2>
+        <button class="component-intro__skip" type="button" data-component-intro-close>Skip</button>
+      </div>
+      <p class="component-intro__caption">Review the components or skip to the simulation.</p>
+      <div class="component-intro__frame">
+        <iframe src="components_window.html?embed=1" title="Components overview"></iframe>
+      </div>
+    </div>
+  </div>
