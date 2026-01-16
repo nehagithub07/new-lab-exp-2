@@ -352,9 +352,14 @@ function findButtonByLabel(label) {
 //   });
 // })();
 
-if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
-  console.error("jsPlumb is not loaded. Connection wiring is disabled.");
-} else {
+let wiringInitialized = false;
+
+function setupJsPlumb() {
+  if (wiringInitialized) return true;
+  if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
+    return false;
+  }
+  wiringInitialized = true;
   jsPlumb.ready(function () {
   const ringSvg =
     'data:image/svg+xml;utf8,' +
@@ -581,8 +586,26 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
     console.log(`Wire from ${sourceId} set to ${wireColor}`); // Debug log (remove if not needed)
   });
 
+  function normalizeRequiredPairs(pairs) {
+    if (!Array.isArray(pairs)) return [];
+    const seen = new Set();
+    return pairs.filter((pair) => {
+      if (!pair || seen.has(pair)) return false;
+      seen.add(pair);
+      const [a, b] = String(pair).split("-");
+      if (!a || !b) return false;
+      if (typeof document !== "undefined") {
+        if (!document.getElementById(a) || !document.getElementById(b)) {
+          console.warn("Required connection missing endpoint(s):", pair);
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
   // Required connections: unsorted list for iteration order in auto-connect, sorted Set for checking
-  const requiredPairs = [
+  const rawRequiredPairs = [
     "pointR-pointC",
     "pointR-pointE",
     "pointB-pointG",
@@ -599,6 +622,7 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
     "pointH-pointA3",
     "pointH-pointZ3"
   ];
+  const requiredPairs = normalizeRequiredPairs(rawRequiredPairs);
   const requiredConnections = new Set(requiredPairs.map(pair => {
     const [a, b] = pair.split("-");
     return [a, b].sort().join("-");
@@ -793,6 +817,36 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
     });
   });
 
+  function guideSpeechActive() {
+    return (
+      typeof window !== "undefined" &&
+      window.labSpeech &&
+      typeof window.labSpeech.isActive === "function" &&
+      window.labSpeech.isActive()
+    );
+  }
+
+  function speakLocal(text, options = {}) {
+    if (!text) return;
+    const opts = options || {};
+    if (window.labSpeech && typeof window.labSpeech.say === "function") {
+      window.labSpeech.say(text, { interruptFirst: opts.interruptFirst !== false });
+      return;
+    }
+    if (window.labSpeech && typeof window.labSpeech.speak === "function") {
+      window.labSpeech.speak(text, { interrupt: opts.interruptFirst !== false });
+    }
+  }
+
+  function speakOrAlertLocal(text) {
+    if (!text) return;
+    if (guideSpeechActive()) {
+      speakLocal(text, { interruptFirst: true });
+    } else {
+      alert(text);
+    }
+  }
+
   // Check button - Robust selection by text content (no ID needed)
   const checkBtn = findButtonByLabel("Check") || findButtonByLabel("Check Connections");
   if (checkBtn) {
@@ -819,22 +873,42 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       });
 
       if (!missing.length && !illegal.length) {
-        alert("Connections are correct. Click the MCB to turn it on.");
+        speakOrAlertLocal("Connections are correct. Click the M C B to turn it on.");
         connectionsVerified = true;
         starterMoved = false;
         window.dispatchEvent(new CustomEvent(CONNECTION_VERIFIED_EVENT));
         return;
       }
 
-      const formatList = (list) => list.slice(0, 5).map(k => k.replace(/point/gi, "").replace(/-/g, " - ")).join(", ");
+      const formatList = (list) =>
+        list.slice(0, 5).map(k => k.replace(/point/gi, "").replace(/-/g, " - ")).join(", ");
+      const formatSpeechList = (list) =>
+        list
+          .slice(0, 5)
+          .map((k) => {
+            const [a, b] = String(k).split("-");
+            const from = formatPointSpeech(a);
+            const to = formatPointSpeech(b);
+            if (!from || !to) return "";
+            return `point ${from} to point ${to}`;
+          })
+          .filter(Boolean)
+          .join(", ");
       let message = "Connection not correct";
+      let speechMessage = "Connection not correct.";
       if (illegal.length) {
         message += `\nWrong/extra connections detected${illegal.length > 5 ? " (showing first few)" : ""}: ${formatList(illegal)}`;
+        speechMessage += ` Wrong connections: ${formatSpeechList(illegal)}.`;
       }
       if (missing.length) {
         message += `\nMissing ${missing.length} required connection(s)${missing.length > 5 ? " (showing first few)" : ""}: ${formatList(missing)}`;
+        speechMessage += ` Missing connections: ${formatSpeechList(missing)}.`;
       }
-      alert(message);
+      if (guideSpeechActive()) {
+        speakLocal(speechMessage, { interruptFirst: true });
+      } else {
+        alert(message);
+      }
       setMcbState(false, { silent: true });
       connectionsVerified = false;
       starterMoved = false;
@@ -913,6 +987,9 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
         suppressAllAutoVoices = false;
         suppressGuideDuringAutoConnect = false;
         isAutoConnecting = false;
+        if (guideWasActive && window.labSpeech && typeof window.labSpeech.speak === "function") {
+          window.labSpeech.speak("Auto connect completed. Click the Check button to verify the wiring.");
+        }
       }, 0);
     });
   } else {
@@ -926,23 +1003,35 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
         callback();
         return;
       }
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        callback();
+      };
+      const timeoutId = setTimeout(finish, 600);
+
+      const handler = () => {
+        if (typeof window.speechSynthesis.removeEventListener === "function") {
+          window.speechSynthesis.removeEventListener("voiceschanged", handler);
+        } else {
+          window.speechSynthesis.onvoiceschanged = null;
+        }
+        clearTimeout(timeoutId);
+        finish();
+      };
+
       const voices = window.speechSynthesis.getVoices();
       if (voices.length) {
-        callback();
+        clearTimeout(timeoutId);
+        finish();
+        return;
+      }
+
+      if (typeof window.speechSynthesis.addEventListener === "function") {
+        window.speechSynthesis.addEventListener("voiceschanged", handler);
       } else {
-        const handler = () => {
-          if (typeof window.speechSynthesis.removeEventListener === "function") {
-            window.speechSynthesis.removeEventListener("voiceschanged", handler);
-          } else {
-            window.speechSynthesis.onvoiceschanged = null;
-          }
-          callback();
-        };
-        if (typeof window.speechSynthesis.addEventListener === "function") {
-          window.speechSynthesis.addEventListener("voiceschanged", handler);
-        } else {
-          window.speechSynthesis.onvoiceschanged = handler;
-        }
+        window.speechSynthesis.onvoiceschanged = handler;
       }
     }
 
@@ -954,24 +1043,53 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
 
     let currentStep = 0;
 
+    function formatPointSpeech(id) {
+      const cleaned = String(id || "")
+        .replace(/^point/i, "")
+        .replace(/[^A-Za-z0-9]/g, "")
+        .toUpperCase();
+      if (!cleaned) return "";
+      const parts = cleaned.match(/[A-Z]+|[0-9]+/g) || [cleaned];
+      return parts.join(" ");
+    }
+
     const steps = requiredPairs
       .map((pair) => pair.split("-"))
       .filter((pair) => pair.length === 2)
       .map(([from, to]) => {
-        const fromLabel = String(from).replace(/^point/i, "");
-        const toLabel = String(to).replace(/^point/i, "");
+        const fromLabel = formatPointSpeech(from);
+        const toLabel = formatPointSpeech(to);
         return {
           from,
           to,
-          text: `Connect point ${fromLabel} to point ${toLabel}.`
+          fromLabel,
+          toLabel
         };
       });
+    const totalSteps = steps.length;
 
-    function speakCurrentStep() {
+    function buildStepText(step, index) {
+      if (!step) return "";
+      return `Connect point ${step.fromLabel} to point ${step.toLabel}.`;
+    }
+
+    const SPEECH_THROTTLE_MS = 700;
+    let lastSpokenStep = -1;
+    let lastSpokenAt = 0;
+
+    function speakCurrentStep({ force = false, queue = false } = {}) {
       if (!guideActive) return;
       const step = steps[currentStep];
       if (!step) return;
-      window.labSpeech.speak(step.text);
+      const now = Date.now();
+      if (!force && currentStep === lastSpokenStep && now - lastSpokenAt < SPEECH_THROTTLE_MS) {
+        return;
+      }
+      lastSpokenStep = currentStep;
+      lastSpokenAt = now;
+      const text = buildStepText(step, currentStep);
+      if (!text) return;
+      window.labSpeech.speak(text, { interrupt: !queue });
     }
 
     function getFirstIncompleteStepIndex() {
@@ -999,7 +1117,7 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       if (label) label.textContent = "Guiding...";
     }
 
-    function speakGuide(text) {
+    function speakGuide(text, options = {}) {
       const speechSupported =
         typeof window !== "undefined" &&
         "speechSynthesis" in window &&
@@ -1008,7 +1126,9 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
         stopGuide({ resetUI: true });
         return;
       }
-      window.labSpeech.speak(text);
+      const interrupt = options.interrupt !== false;
+      lastSpokenStep = -1;
+      window.labSpeech.speak(text, { interrupt });
     }
 
     function getLabStage() {
@@ -1025,25 +1145,31 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
       switch (stage) {
         case "checked":
           activateGuideUI();
-          speakGuide("Connections are already verified. Now turn on the M C B.");
+          speakGuide("Connections are already verified. Turn on the M C B to continue.");
           return;
         case "dc_on":
           activateGuideUI();
-          speakGuide("M C B is already on. Now move the starter handle from left to right.");
+          speakGuide("The M C B is already on. Move the starter handle from left to right.");
           return;
         case "starter_on":
           activateGuideUI();
-          speakGuide("Starter is already on. Now select the number of bulbs from the lamp load.");
+          speakGuide("The starter is already on. Select the number of bulbs from the lamp load.");
           return;
         default:
           break;
+      }
+
+      if (!steps.length) {
+        activateGuideUI();
+        speakGuide("I could not find any wiring points on the page.");
+        return;
       }
 
       const firstIncomplete = getFirstIncompleteStepIndex();
       if (firstIncomplete >= steps.length) {
         activateGuideUI();
         speakGuide(
-          "All connections are completed. Now click on the Check button to confirm the connection."
+          "All connections are complete. Click the Check button to verify the wiring."
         );
         return;
       }
@@ -1053,10 +1179,10 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
 
       waitForVoices(() => {
         if (!("speechSynthesis" in window)) {
-          speakCurrentStep();
+          speakCurrentStep({ force: true });
           return;
         }
-        const intro = new SpeechSynthesisUtterance("Lets connect the components.");
+        const intro = new SpeechSynthesisUtterance("Let's connect the components.");
         const voice = pickPreferredVoice();
         if (voice) intro.voice = voice;
         intro.lang = (voice && voice.lang) || "en-US";
@@ -1065,7 +1191,7 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
         intro.volume = 1;
 
         intro.onend = () => {
-          if (guideActive) speakCurrentStep();
+          if (guideActive) speakCurrentStep({ force: true });
         };
 
         window.speechSynthesis.cancel();
@@ -1078,6 +1204,8 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
 
       guideActive = false;
       currentStep = 0;
+      lastSpokenStep = -1;
+      lastSpokenAt = 0;
 
       if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
@@ -1121,49 +1249,53 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
 
       const made = connectionKey(info.sourceId, info.targetId);
       if (!requiredConnections.has(made)) {
-        const wrongA = info.sourceId.replace("point", "");
-        const wrongB = info.targetId.replace("point", "");
+        const wrongA = formatPointSpeech(info.sourceId);
+        const wrongB = formatPointSpeech(info.targetId);
         window.labSpeech.speak(
-          `Wrong connection. You connected ${wrongA} to ${wrongB}. Please follow the required connections.`
+          `That connection is not in the required list. You connected point ${wrongA} to point ${wrongB}.`
         );
+        speakCurrentStep({ force: true, queue: true });
         return;
       }
 
       currentStep = getFirstIncompleteStepIndex();
       if (currentStep >= steps.length) {
         speakGuide(
-          "Now all the connections are completed. Please click on the Check button to confirm the connections."
+          "All connections are complete. Click the Check button to verify the wiring."
         );
         return;
       }
 
-      speakCurrentStep();
+      speakCurrentStep({ force: true });
     });
 
     jsPlumb.bind("connectionDetached", function () {
       if (!guideActive) return;
       if (suppressGuideDuringAutoConnect || isAutoConnecting) return;
       currentStep = Math.max(0, getFirstIncompleteStepIndex());
+      if (currentStep < steps.length) {
+        speakCurrentStep({ force: true });
+      }
     });
 
     window.addEventListener(CONNECTION_VERIFIED_EVENT, function () {
       if (!guideActive) return;
-      window.labSpeech.speak("Connections verified. Click the M C B to turn it on.");
+      speakGuide("Connections verified. Turn on the M C B to continue.");
     });
 
     window.addEventListener(MCB_TURNED_ON_EVENT, function () {
       if (!guideActive) return;
-      window.labSpeech.speak("Now, move the starter handle from left to right.");
+      speakGuide("Now move the starter handle from left to right.");
     });
 
     window.addEventListener(STARTER_MOVED_EVENT, function () {
       if (!guideActive) return;
-      window.labSpeech.speak("Now, select the number of bulbs from the lamp load.");
+      speakGuide("Select the number of bulbs from the lamp load.");
     });
 
     window.addEventListener(MCB_TURNED_OFF_EVENT, function () {
       if (!guideActive) return;
-      window.labSpeech.speak("M C B is turned off. Turn it on to continue.");
+      speakGuide("The M C B is turned off. Turn it on to continue.");
     });
   })();
 
@@ -1210,7 +1342,23 @@ if (!window.jsPlumb || typeof window.jsPlumb.ready !== "function") {
   }
   window.addEventListener("resize", lockPointsToBase);
   });
+  return true;
 }
+
+(function startJsPlumbWhenReady() {
+  if (setupJsPlumb()) return;
+  console.error("jsPlumb is not loaded yet. Retrying...");
+  const retryInterval = setInterval(() => {
+    if (setupJsPlumb()) clearInterval(retryInterval);
+  }, 200);
+  window.addEventListener(
+    "load",
+    () => {
+      if (setupJsPlumb()) clearInterval(retryInterval);
+    },
+    { once: true }
+  );
+})();
 
  
 const NEEDLE_TRANSFORM_TRANSLATE = "translate(-50%, -82.5%)";
@@ -1340,7 +1488,7 @@ function voltageToAngle(voltageValue) {
 
   function enforceReady(action) {
     if (!connectionsVerified) {
-      speakOrAlert("You have to check the connections first.");
+      speakOrAlert("Please check the connections first.");
       if (action === "lampSelect" && lampSelect) {
         lampSelect.value = "";
         selectedIndex = -1;
@@ -1351,11 +1499,11 @@ function voltageToAngle(voltageValue) {
       return false;
     }
     if (!mcbOn) {
-      speakOrAlert("Turn on the MCB before continuing.");
+      speakOrAlert("Please turn on the M C B before continuing.");
       return false;
     }
     if (!starterMoved) {
-      speakOrAlert("You have to move starter handle from left to right");
+      speakOrAlert("Please move the starter handle from left to right.");
       return false;
     }
     return true;
@@ -1885,7 +2033,7 @@ tr:nth-child(even) { background-color: #f8fbff; }
     readingsRecorded.length = 0;
 
     if (observationBody) {
-      observationBody.innerHTML = `<tr class="placeholder-row"><td colspan="3">No readings added yet.</td></tr>`;
+      observationBody.innerHTML = "";
     }
 
     selectedIndex = -1;
@@ -2256,13 +2404,21 @@ tr:nth-child(even) { background-color: #f8fbff; }
   const skipBtn = modal.querySelector("[data-components-skip]");
   const openBtns = document.querySelectorAll("[data-open-components]");
 
-  // If you want "Skip" to only close for now (not remember), remove STORAGE_KEY lines.
+  // Keep "Skip" for the current tab only (shows again on full reload).
   const STORAGE_KEY = "vl_components_skipped";
+  const STORAGE =
+    (() => {
+      try {
+        return window.sessionStorage;
+      } catch (e) {
+        return null;
+      }
+    })();
 
   function openComponentsModal({ force = false } = {}) {
-    if (!force) {
+    if (!force && STORAGE) {
       try {
-        if (localStorage.getItem(STORAGE_KEY) === "1") return;
+        if (STORAGE.getItem(STORAGE_KEY) === "1") return;
       } catch (e) {}
     }
     modal.classList.remove("is-hidden");
@@ -2273,9 +2429,9 @@ tr:nth-child(even) { background-color: #f8fbff; }
     modal.classList.add("is-hidden");
     document.body.classList.remove("is-modal-open");
 
-    if (skip) {
+    if (skip && STORAGE) {
       try {
-        localStorage.setItem(STORAGE_KEY, "1");
+        STORAGE.setItem(STORAGE_KEY, "1");
       } catch (e) {}
     }
   }

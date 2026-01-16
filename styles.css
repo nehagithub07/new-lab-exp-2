@@ -950,11 +950,13 @@ h3 {
 }
 
 .observation-header {
+  position: relative;
+  right: 10px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
 }
 .table-label {
   position: relative;
@@ -1005,7 +1007,6 @@ h3 {
 
 #observationTable {
   width: 100%;
-  height: 50px;
   border-collapse: collapse;
   background: #f4eee2;
   border: 2px solid var(--ink);
@@ -1037,16 +1038,18 @@ h3 {
 .observation-floating {
   position: absolute;
   top: 250px;
-  right: -420px;
-  width: 50%;
-  min-width: 230px;
-  max-width: 380px;
+  right: -50px;
+  transform: translateX(calc(100% + clamp(8px, 2vw, 16px)));
+  width: clamp(220px, 22vw, 340px);
+  min-width: 0;
+  max-width: none;
   z-index: 5;
 }
 
 @media (max-width: 1100px) {
   .observation-floating {
     position: static;
+    transform: none;
     width: 100%;
     max-width: none;
     margin-top: clamp(12px, 2vw, 16px);
@@ -1319,29 +1322,55 @@ h3 {
   align-items: center;
   justify-content: center;
   z-index: 4000;
-  transition: opacity 0.2s ease;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.22s ease, visibility 0s linear 0s;
 }
 
 .step-modal.is-hidden {
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
 }
 
 .step-modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(17, 17, 17, 0.35);
+  background: radial-gradient(circle at top, rgba(17, 17, 17, 0.45), rgba(17, 17, 17, 0.7));
+  backdrop-filter: blur(2px) saturate(1.05);
+  animation: stepBackdropIn 240ms ease-out;
 }
 
 .step-modal__card {
   position: relative;
-  background: linear-gradient(135deg, #fffaf0, #f1dfc0);
-  border: 2px solid var(--wood-border);
-  border-radius: 12px;
-  padding: 18px 20px;
-  width: min(440px, 92vw);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25), 0 2px 0 #b08a55;
+  background: linear-gradient(160deg, #fffaf0 0%, #f1dfc0 55%, #e6cca2 100%);
+  border: 1px solid rgba(176, 138, 85, 0.9);
+  border-radius: 14px;
+  padding: 20px 22px;
+  width: min(460px, 92vw);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28), 0 2px 0 rgba(176, 138, 85, 0.85);
   color: #2c1a0a;
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.step-modal.is-hidden .step-modal__card {
+  transform: translateY(16px) scale(0.98);
+  opacity: 0;
+}
+
+.step-modal__card::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 12px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(47, 90, 120, 0.1), rgba(47, 90, 120, 0.7), rgba(47, 90, 120, 0.1));
+  opacity: 0.7;
 }
 
 .step-modal__header {
@@ -1357,15 +1386,31 @@ h3 {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.95rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f7efde, #e2d5c2 60%, #cdb9a0);
+  border: 1px solid rgba(176, 138, 85, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 12px rgba(0, 0, 0, 0.12);
 }
 
 .step-modal__close {
-  border: none;
-  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.8);
   color: #2c1a0a;
   font-size: 1.1rem;
   cursor: pointer;
   line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.step-modal__close:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
 }
 
 .step-modal__body p {
@@ -1374,7 +1419,7 @@ h3 {
 
 .step-modal__title {
   font-weight: 700;
-  font-size: 1.12rem;
+  font-size: 1.15rem;
   margin-bottom: 6px;
 }
 
@@ -1385,7 +1430,7 @@ h3 {
 
 .step-modal__cta {
   margin-top: 12px;
-  background: #1b6fb8;
+  background: linear-gradient(135deg, #1b6fb8, #2f85cc);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1393,7 +1438,14 @@ h3 {
   font-weight: 700;
   letter-spacing: 0.04em;
   cursor: pointer;
-  box-shadow: 0 4px 0 #0f4c82, 0 10px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 0 #0f4c82, 0 12px 22px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.step-modal__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #0f4c82, 0 16px 28px rgba(0, 0, 0, 0.2);
+  filter: saturate(1.05);
 }
 
 .step-modal__cta:active {
@@ -1422,24 +1474,33 @@ h3 {
 .components-overlay__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(2px);
-  animation: componentsBackdropFade 220ms ease-out;
+  background: radial-gradient(circle at top, rgba(25, 25, 25, 0.45), rgba(10, 10, 10, 0.75));
+  backdrop-filter: blur(3px) saturate(1.05);
+  animation: componentsBackdropFade 240ms ease-out;
 }
 
 .components-dialog {
   position: relative;
   width: min(1100px, 96vw);
   height: min(680px, 90vh);
-  background: #fff;
+  background: linear-gradient(145deg, #fffdf7, #f1e7d6);
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.12);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  border: 1px solid rgba(140, 106, 72, 0.45);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.35), 0 2px 0 rgba(176, 138, 85, 0.6);
   display: flex;
   flex-direction: column;
-  animation: componentsDialogIn 260ms ease-out;
+  animation: componentsDialogIn 320ms ease-out;
   will-change: transform, opacity;
+}
+
+.components-dialog::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  pointer-events: none;
 }
 
 .components-dialog__header {
@@ -1448,8 +1509,22 @@ h3 {
   justify-content: space-between;
   gap: 10px;
   padding: 12px 14px;
-  background: linear-gradient(145deg, #f7f7f7, #eeeeee);
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  background: linear-gradient(135deg, #f7f1e6, #e9dcc9 65%, #d9c6aa);
+  border-bottom: 1px solid rgba(140, 106, 72, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.components-dialog__header::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 6px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(47, 90, 120, 0.1), rgba(47, 90, 120, 0.55), rgba(47, 90, 120, 0.1));
+  opacity: 0.8;
 }
 
 .components-dialog__title {
@@ -1467,34 +1542,61 @@ h3 {
 .components-skip-btn {
   padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(47,90,120,0.45);
-  background: #fff;
+  border: 1px solid rgba(47, 90, 120, 0.45);
+  background: linear-gradient(135deg, #ffffff, #f0e7d7);
   color: #2f5a78;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.components-skip-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
 }
 
 .components-close-btn {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  border: 1px solid rgba(0,0,0,0.12);
-  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: linear-gradient(135deg, #ffffff, #f3ebdf);
   cursor: pointer;
   font-size: 22px;
   line-height: 1;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.components-close-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.16);
 }
 
 .components-dialog__body {
   flex: 1;
   background: radial-gradient(circle at top, #e3ddcf 0%, #d2c9bb 55%, #c8bfb1 100%);
+  padding: 10px;
+  position: relative;
+}
+
+.components-dialog__body::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  pointer-events: none;
 }
 
 .components-dialog__body iframe {
   width: 100%;
   height: 100%;
   border: 0;
-  background: transparent;
+  background: #f7efe2;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 14px 28px rgba(0, 0, 0, 0.18);
+  position: relative;
+  z-index: 1;
 }
 
 body.is-modal-open {
@@ -1538,8 +1640,10 @@ body.is-modal-open {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle at top, rgba(18, 24, 30, 0.55), rgba(8, 10, 12, 0.82));
+  backdrop-filter: blur(3px) saturate(1.05);
   z-index: 5000;
+  animation: instructionBackdropIn 260ms ease-out;
 }
 
 .instruction-overlay.is-hidden {
@@ -1556,22 +1660,44 @@ body.is-modal-open {
   width: min(1100px, 96vw);
   max-height: 90vh;
   overflow: auto;
-  background: #fdf7e7;
-  border: 3px solid var(--ink);
-  border-radius: 14px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(165deg, #fdf7e7 0%, #f3e6cd 55%, #e7d6b4 100%);
+  border: 2px solid rgba(140, 106, 72, 0.7);
+  border-radius: 16px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.35), 0 2px 0 rgba(176, 138, 85, 0.6);
+  will-change: transform, opacity;
+}
+
+.instruction-dialog::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  pointer-events: none;
 }
 
 .instruction-close {
   position: absolute;
   top: 10px;
   right: 14px;
-  border: none;
-  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: linear-gradient(135deg, #ffffff, #efe4d4);
   font-size: 22px;
   font-weight: 700;
   cursor: pointer;
   line-height: 1;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.instruction-close:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.22);
 }
 
 .vl-card {
@@ -1619,6 +1745,8 @@ body.is-modal-open {
   max-height: 320px;
   overflow: auto;
   border-radius: 10px;
+  border: 1px solid rgba(140, 106, 72, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .instruction-image {
@@ -1631,17 +1759,21 @@ body.is-modal-open {
 }
 
 .animate-fadeInUp {
-  animation: fadeInUp 260ms ease-out;
+  animation: fadeInUp 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes fadeInUp {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(18px) scale(0.98);
   }
-  to {
+  60% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(-4px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -1698,13 +1830,21 @@ body.is-modal-open {
   padding: 14px;
   border-radius: 6px;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
   z-index: 3000;
 }
 
 .instructions-wrapper:hover .instructions-panel,
 .instructions-wrapper:focus-within .instructions-panel {
-  display: block;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0s;
 }
 
 .instructions-panel h4 {
@@ -1889,10 +2029,24 @@ body.is-modal-open {
 @media (prefers-reduced-motion: reduce) {
   .components-dialog,
   .components-overlay__backdrop,
+  .instruction-overlay,
+  .instruction-dialog,
+  .step-modal__backdrop,
+  .step-modal__card,
   .components-launcher::after,
   .components-launcher svg,
   .chatbot-launcher-image {
     animation: none !important;
+  }
+
+  .step-modal,
+  .step-modal__card,
+  .components-skip-btn,
+  .components-close-btn,
+  .instruction-close,
+  .step-modal__cta,
+  .instructions-panel {
+    transition: none !important;
   }
 }
  
@@ -2011,6 +2165,7 @@ body.is-modal-open {
   }
 }
 
+
 @media (max-width: 780px) {
   .top-row {
     grid-template-columns: 1fr;
@@ -2083,14 +2238,25 @@ body.is-modal-open {
   50% { filter: drop-shadow(0 0 18px rgba(59, 130, 246, 0.85)); }
 }
 
+@keyframes stepBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes instructionBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes componentsBackdropFade {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 @keyframes componentsDialogIn {
-  from { opacity: 0; transform: translateY(14px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  0% { opacity: 0; transform: translateY(18px) scale(0.96); }
+  60% { opacity: 1; transform: translateY(-6px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes componentsPulse {
