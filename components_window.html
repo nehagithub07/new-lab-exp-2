@@ -409,6 +409,9 @@
             padding: 12px;
             gap: 14px;
         }
+        body.embed .component-audio {
+            display: none;
+        }
         body.embed .component-sidebar {
             width: 220px;
             min-width: 180px;
@@ -551,7 +554,7 @@
                 image: "images/Components/Starter.png",
                 description:
                     "A 3-point starter safely starts DC shunt and compound motors. It limits starting current, provides overload protection, and ensures smooth acceleration by gradually reducing resistance.",
-                audio: ""
+                audio: "3pointstarter.wav"
             },
             {
                 key: "shuntmotor",
@@ -559,7 +562,7 @@
                 image: "images/Components/shuntmotor.png",
                 description:
                     "In this experiment, the DC motor acts as a prime mover, converting electrical energy into mechanical energy. Its shaft is mechanically coupled to the DC shunt generator, and it receives the supply through the MCB and starter.",
-                audio: ""
+                audio: "dcMotor.wav"
             },
             {
                 key: "generator",
@@ -567,7 +570,7 @@
                 image: "images/Components/DC-Shunt-Generator.png",
                 description:
                     "The DC shunt generator converts the mechanical energy received from the motor into electrical energy, producing DC output voltage and current. Its terminals are connected to an ammeter in series and a voltmeter in parallel for measurement.",
-                audio: ""
+                audio: "dcShuntGenerator.wav"
             },
             
             {
@@ -576,7 +579,7 @@
                 image: "images/Components/LampBoard.png",
                 description:
                     "A lamp load is used as a variable resistive load to study the load characteristics of a DC shunt generator. It helps observe how the terminal voltage varies with the load current.",
-                audio: ""
+                audio: "lampLoad.wav"
             },
             
             {
@@ -585,7 +588,7 @@
                 image: "images/Components/ammeter.png",
                 description:
                     "This ammeter is connected in series with the DC motor. Its purpose is to measure the current drawn by the DC motor while it is operating.",
-                audio: ""
+                audio: "ammeter.wav"
             },
             {
                 key: "voltmeter",
@@ -593,7 +596,7 @@
                 image: "images/Components/voltmeter.png",
                 description:
                     "It is connected in parallel across the MCB. The purpose of this voltmeter is to measure the voltage of the main supply.",
-                audio: ""
+                audio: "voltmeter.wav"
             },
             
            
@@ -614,6 +617,7 @@
         const audioEl = document.getElementById("componentAudio");
         const speechSupported =
             "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
+        const isEmbedded = window.parent && window.parent !== window;
 
         let currentIndex = 0;
         let swapTimer = null;
@@ -668,6 +672,17 @@
             if (audioLabelEl) {
                 audioLabelEl.textContent = isPlaying ? "Pause Audio" : "Play Audio";
             }
+            if (isEmbedded) {
+                window.parent.postMessage(
+                    {
+                        type: "component-audio-state",
+                        playing: isPlaying,
+                        disabled: audioBtn.disabled,
+                        label: audioLabelEl ? audioLabelEl.textContent : ""
+                    },
+                    "*"
+                );
+            }
         }
 
         function stopAudio() {
@@ -680,6 +695,64 @@
             }
             ttsState = "idle";
             updateAudioButton(false);
+        }
+
+        function playAudio() {
+            if (audioMode === "file") {
+                if (!audioEl) return;
+                if (audioEl.paused) {
+                    audioEl.play().catch(() => {});
+                }
+                updateAudioButton(true);
+                return;
+            }
+
+            if (!speechSupported) return;
+
+            if (ttsState === "paused") {
+                window.speechSynthesis.resume();
+                ttsState = "playing";
+                updateAudioButton(true);
+                return;
+            }
+
+            if (ttsState === "playing") {
+                updateAudioButton(true);
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(activeComponent.description);
+            ttsState = "playing";
+            utterance.onend = () => {
+                ttsState = "idle";
+                updateAudioButton(false);
+            };
+            utterance.onerror = () => {
+                ttsState = "idle";
+                updateAudioButton(false);
+            };
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+            updateAudioButton(true);
+        }
+
+        function pauseAudio() {
+            if (audioMode === "file") {
+                if (!audioEl) return;
+                if (!audioEl.paused) {
+                    audioEl.pause();
+                }
+                updateAudioButton(false);
+                return;
+            }
+
+            if (!speechSupported) return;
+
+            if (ttsState === "playing") {
+                window.speechSynthesis.pause();
+                ttsState = "paused";
+                updateAudioButton(false);
+            }
         }
 
         function prepareAudio(component) {
@@ -707,6 +780,18 @@
             } else {
                 setAudioStatus(" ");
             }
+
+            if (isEmbedded && audioBtn) {
+                window.parent.postMessage(
+                    {
+                        type: "component-audio-state",
+                        playing: audioBtn.getAttribute("aria-pressed") === "true",
+                        disabled: audioBtn.disabled,
+                        label: audioLabelEl ? audioLabelEl.textContent : ""
+                    },
+                    "*"
+                );
+            }
         }
 
         function applyComponent(component) {
@@ -715,6 +800,7 @@
             titleEl.textContent = component.name;
             definitionEl.textContent = component.description;
             prepareAudio(component);
+            playAudio();
         }
 
         function restartCardAnimation() {
@@ -773,47 +859,34 @@
 
         if (audioBtn) {
             audioBtn.addEventListener("click", () => {
-                if (audioMode === "file") {
-                    if (!audioEl) return;
-                    if (audioEl.paused) {
-                        audioEl.play().catch(() => {});
-                        updateAudioButton(true);
-                    } else {
-                        audioEl.pause();
-                        updateAudioButton(false);
-                    }
-                    return;
+                const isPlaying = audioBtn.getAttribute("aria-pressed") === "true";
+                if (isPlaying) {
+                    pauseAudio();
+                } else {
+                    playAudio();
                 }
+            });
+        }
 
-                if (!speechSupported) return;
-
-                if (ttsState === "playing") {
-                    window.speechSynthesis.pause();
-                    ttsState = "paused";
-                    updateAudioButton(false);
-                    return;
+        if (isEmbedded) {
+            window.addEventListener("message", (event) => {
+                if (event.source !== window.parent) return;
+                const data = event.data || {};
+                if (data.type === "component-audio-toggle") {
+                    audioBtn?.click();
                 }
-
-                if (ttsState === "paused") {
-                    window.speechSynthesis.resume();
-                    ttsState = "playing";
-                    updateAudioButton(true);
-                    return;
+                if (data.type === "component-audio-play") {
+                    playAudio();
                 }
-
-                const utterance = new SpeechSynthesisUtterance(activeComponent.description);
-                ttsState = "playing";
-                utterance.onend = () => {
-                    ttsState = "idle";
-                    updateAudioButton(false);
-                };
-                utterance.onerror = () => {
-                    ttsState = "idle";
-                    updateAudioButton(false);
-                };
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(utterance);
-                updateAudioButton(true);
+                if (data.type === "component-audio-pause") {
+                    pauseAudio();
+                }
+                if (data.type === "component-audio-request") {
+                    updateAudioButton(audioBtn?.getAttribute("aria-pressed") === "true");
+                }
+                if (data.type === "component-audio-stop") {
+                    stopAudio();
+                }
             });
         }
 

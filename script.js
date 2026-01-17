@@ -733,6 +733,12 @@ function setupJsPlumb() {
     mcbImg.classList.toggle("is-on", mcbOn);
     if (!wasOn && mcbOn) {
       window.dispatchEvent(new CustomEvent(MCB_TURNED_ON_EVENT));
+      if (!silent) {
+        showPopup(
+          "MCB is turned on. Now move the starter handle from left to right.",
+          "MCB ON"
+        );
+      }
     }
     if (wasOn && !mcbOn) {
       starterMoved = false;
@@ -1448,6 +1454,9 @@ function voltageToAngle(voltageValue) {
   const readingsRecorded = [];
   let selectedIndex = -1;
   let readingArmed = false;
+  let addReadingAlertShown = false;
+  let graphReadyAnnounced = false;
+  let graphPlotAlertShown = false;
 
   function speechIsActive() {
     return (
@@ -1604,6 +1613,10 @@ function voltageToAngle(voltageValue) {
         window.Plotly.newPlot(graphPlot, [trace], layout, { displaylogo: false, responsive: true });
         stepGuide.complete("graph");
         updateGraphControls();
+        if (!graphPlotAlertShown) {
+          graphPlotAlertShown = true;
+          showPopup("Graph plotted. You can now generate the report.", "Graph Ready");
+        }
         speak(
           "The graph of terminal voltage versus load current has been plotted. Your experiment is now complete. You may view the report by clicking the Report button, then use Print to print the page or Reset to start again."
         );
@@ -1875,22 +1888,30 @@ tr:nth-child(even) { background-color: #f8fbff; }
       return;
     }
 
-    try {
-      reportWindow.document.open("text/html", "replace");
-      reportWindow.document.write(html);
-      reportWindow.document.close();
-      reportWindow.focus();
-      speak(
-        "Report opened in a new tab. You can print it from the report window, or use Reset to start again."
-      );
-    } catch (err) {
       try {
-        const blob = new Blob([html], { type: "text/html" });
-        const url = URL.createObjectURL(blob);
-        reportWindow.location = url;
-        setTimeout(function () {
-          URL.revokeObjectURL(url);
-        }, 5000);
+        reportWindow.document.open("text/html", "replace");
+        reportWindow.document.write(html);
+        reportWindow.document.close();
+        reportWindow.focus();
+        showPopup(
+          "Report generated. You can now print it or reset the experiment.",
+          "Report Ready"
+        );
+        speak(
+          "Report opened in a new tab. You can print it from the report window, or use Reset to start again."
+        );
+      } catch (err) {
+        try {
+          const blob = new Blob([html], { type: "text/html" });
+          const url = URL.createObjectURL(blob);
+          reportWindow.location = url;
+          showPopup(
+            "Report generated. You can now print it or reset the experiment.",
+            "Report Ready"
+          );
+          setTimeout(function () {
+            URL.revokeObjectURL(url);
+          }, 5000);
       } catch (err2) {
         console.error("Report generation failed:", err2);
         speakOrAlert("Unable to render the report. Please disable popup blockers and try again.");
@@ -1933,6 +1954,7 @@ tr:nth-child(even) { background-color: #f8fbff; }
       readingArmed = false;
       return;
     }
+
     readingsRecorded.push({
       load,
       current: ammeter2Readings[selectedIndex],
@@ -1940,6 +1962,10 @@ tr:nth-child(even) { background-color: #f8fbff; }
     });
 
     addRowToTable(selectedIndex);
+    if (!addReadingAlertShown) {
+      addReadingAlertShown = true;
+      showPopup("Reading added to the observation table.", "Observation");
+    }
     readingArmed = false;
     stepGuide.complete("reading");
 
@@ -1949,6 +1975,14 @@ tr:nth-child(even) { background-color: #f8fbff; }
       speak("Once again, change the bulb selection.");
     } else if (readingsRecorded.length >= minGraphPoints && readingsRecorded.length < 10) {
       speak("Now, you can plot the graph by clicking on the Graph button or add more readings to the table.");
+    }
+
+    if (!graphReadyAnnounced && readingsRecorded.length >= minGraphPoints) {
+      graphReadyAnnounced = true;
+      showPopup(
+        "You have added 6 readings. Now you can plot the graph.",
+        "Graph Ready"
+      );
     }
   }
 
@@ -2021,6 +2055,9 @@ tr:nth-child(even) { background-color: #f8fbff; }
     }
 
     readingsRecorded.length = 0;
+    addReadingAlertShown = false;
+    graphReadyAnnounced = false;
+    graphPlotAlertShown = false;
 
     if (observationBody) {
       observationBody.innerHTML = "";
@@ -2386,43 +2423,90 @@ tr:nth-child(even) { background-color: #f8fbff; }
   }
 })();
 // Components popup (auto on load + open from icon)
-(function () {
-  const modal = document.getElementById("componentsModal");
-  if (!modal) return;
+  (function () {
+    const modal = document.getElementById("componentsModal");
+    if (!modal) return;
 
-  const closeEls = modal.querySelectorAll("[data-components-close]");
-  const skipBtn = modal.querySelector("[data-components-skip]");
-  const openBtns = document.querySelectorAll("[data-open-components]");
+    const closeEls = modal.querySelectorAll("[data-components-close]");
+    const skipBtn = modal.querySelector("[data-components-skip]");
+    const audioBtn = modal.querySelector("[data-components-audio]");
+    const audioLabel = modal.querySelector("[data-components-audio-label]");
+    const componentsFrame = modal.querySelector("iframe");
+    const openBtns = document.querySelectorAll("[data-open-components]");
 
   // Keep "Skip" for the current tab only (shows again on full reload).
   const STORAGE_KEY = "vl_components_skipped";
-  const STORAGE =
-    (() => {
-      try {
-        return window.sessionStorage;
-      } catch (e) {
-        return null;
-      }
-    })();
+    const STORAGE =
+      (() => {
+        try {
+          return window.sessionStorage;
+        } catch (e) {
+          return null;
+        }
+      })();
 
-  function openComponentsModal({ force = false } = {}) {
-    if (!force && STORAGE) {
-      try {
-        if (STORAGE.getItem(STORAGE_KEY) === "1") return;
-      } catch (e) {}
+    function updateAudioControl(state = {}) {
+      if (!audioBtn) return;
+      const playing = !!state.playing;
+      const disabled = !!state.disabled;
+      const label = state.label || (playing ? "Pause Audio" : "Play Audio");
+      audioBtn.setAttribute("aria-pressed", playing ? "true" : "false");
+      audioBtn.disabled = disabled;
+      if (audioLabel) audioLabel.textContent = label;
     }
-    modal.classList.remove("is-hidden");
-    document.body.classList.add("is-modal-open");
-  }
 
-  function closeComponentsModal({ skip = false } = {}) {
-    modal.classList.add("is-hidden");
-    document.body.classList.remove("is-modal-open");
+    function postAudioMessage(type) {
+      if (!componentsFrame || !componentsFrame.contentWindow) return;
+      componentsFrame.contentWindow.postMessage({ type }, "*");
+    }
 
-    if (skip && STORAGE) {
-      try {
-        STORAGE.setItem(STORAGE_KEY, "1");
-      } catch (e) {}
+    function requestAudioState() {
+      postAudioMessage("component-audio-request");
+    }
+
+    if (audioBtn) {
+      audioBtn.addEventListener("click", () => {
+        postAudioMessage("component-audio-toggle");
+      });
+    }
+
+    if (componentsFrame) {
+      componentsFrame.addEventListener("load", () => {
+        requestAudioState();
+        if (!modal.classList.contains("is-hidden")) {
+          postAudioMessage("component-audio-play");
+        }
+      });
+    }
+
+    window.addEventListener("message", (event) => {
+      if (!componentsFrame || event.source !== componentsFrame.contentWindow) return;
+      const data = event.data || {};
+      if (data.type !== "component-audio-state") return;
+      updateAudioControl(data.state || data);
+    });
+
+    function openComponentsModal({ force = false } = {}) {
+      if (!force && STORAGE) {
+        try {
+          if (STORAGE.getItem(STORAGE_KEY) === "1") return;
+        } catch (e) {}
+      }
+      modal.classList.remove("is-hidden");
+      document.body.classList.add("is-modal-open");
+      requestAudioState();
+      postAudioMessage("component-audio-play");
+    }
+
+    function closeComponentsModal({ skip = false } = {}) {
+      modal.classList.add("is-hidden");
+      document.body.classList.remove("is-modal-open");
+      postAudioMessage("component-audio-stop");
+
+      if (skip && STORAGE) {
+        try {
+          STORAGE.setItem(STORAGE_KEY, "1");
+        } catch (e) {}
     }
   }
 
