@@ -1315,151 +1315,6 @@ h3 {
   border-radius: 4px;
 }
 
-/* Guided step popups */
-.step-modal {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 4000;
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 0.22s ease, visibility 0s linear 0s;
-}
-
-.step-modal.is-hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
-}
-
-.step-modal__backdrop {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at top, rgba(17, 17, 17, 0.45), rgba(17, 17, 17, 0.7));
-  backdrop-filter: blur(2px) saturate(1.05);
-  animation: stepBackdropIn 240ms ease-out;
-}
-
-.step-modal__card {
-  position: relative;
-  background: linear-gradient(160deg, #fffaf0 0%, #f1dfc0 55%, #e6cca2 100%);
-  border: 1px solid rgba(176, 138, 85, 0.9);
-  border-radius: 14px;
-  padding: 20px 22px;
-  width: min(460px, 92vw);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28), 0 2px 0 rgba(176, 138, 85, 0.85);
-  color: #2c1a0a;
-  transform: translateY(0) scale(1);
-  opacity: 1;
-  transition: transform 0.25s ease, opacity 0.25s ease;
-}
-
-.step-modal.is-hidden .step-modal__card {
-  transform: translateY(16px) scale(0.98);
-  opacity: 0;
-}
-
-.step-modal__card::before {
-  content: "";
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  top: 12px;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(47, 90, 120, 0.1), rgba(47, 90, 120, 0.7), rgba(47, 90, 120, 0.1));
-  opacity: 0.7;
-}
-
-.step-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  gap: 12px;
-}
-
-.step-modal__step {
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.95rem;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #f7efde, #e2d5c2 60%, #cdb9a0);
-  border: 1px solid rgba(176, 138, 85, 0.6);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 12px rgba(0, 0, 0, 0.12);
-}
-
-.step-modal__close {
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  background: rgba(255, 255, 255, 0.8);
-  color: #2c1a0a;
-  font-size: 1.1rem;
-  cursor: pointer;
-  line-height: 1;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.step-modal__close:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
-}
-
-.step-modal__body p {
-  margin: 0;
-}
-
-.step-modal__title {
-  font-weight: 700;
-  font-size: 1.15rem;
-  margin-bottom: 6px;
-}
-
-.step-modal__copy {
-  line-height: 1.4;
-  font-size: 0.97rem;
-}
-
-.step-modal__cta {
-  margin-top: 12px;
-  background: linear-gradient(135deg, #1b1f24, #0f141a 55%, #0a0f14);
-  color: #e9edf2;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
-  box-shadow: 0 4px 0 #06090c, 0 12px 22px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-}
-
-.step-modal__cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 5px 0 #06090c, 0 16px 28px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  filter: saturate(1.05) brightness(1.08);
-}
-
-.step-modal__cta:active {
-  transform: translateY(1px);
-  box-shadow: 0 3px 0 #06090c, 0 6px 12px rgba(0, 0, 0, 0.22);
-}
-
-.step-modal__cta:focus-visible {
-  outline: 3px solid rgba(255, 217, 132, 0.8);
-  outline-offset: 3px;
-}
-
 .mcb-toggle.is-on {
   filter: drop-shadow(0 0 6px rgba(255, 230, 80, 0.75));
 }
@@ -1634,6 +1489,109 @@ h3 {
 
 body.is-modal-open {
   overflow: hidden;
+}
+
+/* Warning modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+  z-index: 7000;
+}
+
+.modal.show {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.modal-box {
+  background: #fff;
+  padding: 26px 28px;
+  border-radius: 14px;
+  max-width: 420px;
+  width: min(420px, 92vw);
+  text-align: center;
+  border: 2px solid #8b1e3f;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+  animation: slideFromTop 0.5s ease-in, pulse 1.5s infinite;
+}
+
+.modal-box h2 {
+  color: #d86c00;
+  margin-bottom: 10px;
+}
+
+#modalMessage {
+  white-space: pre-line;
+}
+
+.modal-box.danger {
+  animation: slideFromTop 0.6s ease-out, pulse 1.5s infinite;
+}
+
+.modal-box.closing {
+  animation: slideToBottom 0.5s ease-in forwards;
+}
+
+.modal-close-btn {
+  margin-top: 15px;
+  padding: 10px 18px;
+  border: none;
+  background: #8b1e3f;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.modal-close-btn:hover {
+  filter: brightness(1.05);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(140, 106, 72, 0.8);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 35px rgba(140, 106, 72, 0.95);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(140, 106, 72, 0.8);
+  }
+}
+
+@keyframes slideFromTop {
+  0% {
+    transform: translateY(-120vh) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideToBottom {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(120vh) scale(0.8);
+    opacity: 0;
+  }
 }
 
 /* Chatbot header actions layout + icon button */
@@ -2076,31 +2034,26 @@ body.is-modal-open {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .components-dialog,
-  .components-overlay__backdrop,
-  .instruction-overlay,
-  .instruction-dialog,
-  .step-modal__backdrop,
-  .step-modal__card,
-  .components-launcher::before,
-  .components-launcher::after,
-  .components-launcher svg,
+  @media (prefers-reduced-motion: reduce) {
+    .components-dialog,
+    .components-overlay__backdrop,
+    .instruction-overlay,
+    .instruction-dialog,
+    .components-launcher::before,
+    .components-launcher::after,
+    .components-launcher svg,
   .components-launcher__icon,
   .chatbot-launcher-image {
     animation: none !important;
   }
 
-  .step-modal,
-  .step-modal__card,
-  .components-skip-btn,
-  .components-close-btn,
-  .instruction-close,
-  .step-modal__cta,
-  .instructions-panel {
-    transition: none !important;
+    .components-skip-btn,
+    .components-close-btn,
+    .instruction-close,
+    .instructions-panel {
+      transition: none !important;
+    }
   }
-}
  
  .pill-btn:hover {
    background-position: right center; /* change the direction of the change here */
@@ -2327,15 +2280,14 @@ body.is-modal-open {
   }
 
   /* Hide interactive UI */
-  #pill-stack,
-  .graph-actions,
-  .instructions-panel,
-  .instruction-overlay,
-  .step-modal,
-  .chatbot-widget,
-  .hover-tooltip {
-    display: none !important;
-  }
+    #pill-stack,
+    .graph-actions,
+    .instructions-panel,
+    .instruction-overlay,
+    .chatbot-widget,
+    .hover-tooltip {
+      display: none !important;
+    }
 
   .graph-bars {
     display: none !important;
@@ -2357,11 +2309,6 @@ body.is-modal-open {
 @keyframes chatbotPulse {
   0%, 100% { filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.65)); }
   50% { filter: drop-shadow(0 0 18px rgba(59, 130, 246, 0.85)); }
-}
-
-@keyframes stepBackdropIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 @keyframes instructionBackdropIn {

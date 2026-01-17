@@ -145,112 +145,102 @@ function updateRotorSpin() {
   generatorRotor.classList.toggle("spinning", shouldSpin);
 }
 
-// Step-by-step helper popups
-const stepGuide = (() => {
-  const steps = [
-    {
-      id: "connect",
-      title: "Make the connections",
-      copy: "Use the label points to wire the circuit or press Auto Connect. When you are done, hit Check Connections."
-    },
-    {
-      id: "mcb",
-      title: "Turn on the MCB",
-      copy: "Connections are correct. Click the MCB to switch it on before moving the starter."
-    },
-    {
-      id: "starter",
-      title: "Move the starter handle",
-      copy: "Drag the starter handle from left to right to start the setup."
-    },
-    {
-      id: "reading",
-      title: "Add a reading",
-      copy: "Choose the number of bulbs and click Add To Table to log the paired readings."
-    },
-    {
-      id: "graph",
-      title: "Plot the graph",
-      copy: "After adding at least six readings, click Graph to draw Voltage vs Load Current."
-    },
-    {
-      id: "done",
-      title: "All steps complete",
-      copy: "Great job! You can keep experimenting or press Reset to run the flow again."
+// Step-by-step helper popups removed
+const stepGuide = {
+  complete: () => {},
+  reset: () => {},
+  showCurrent: () => {},
+  hide: () => {}
+};
+
+function setBodyModalState(isOpen) {
+  const body = document.body;
+  if (!body) return;
+  if (isOpen) {
+    body.classList.add("is-modal-open");
+    return;
+  }
+  const componentsModal = document.getElementById("componentsModal");
+  if (componentsModal && !componentsModal.classList.contains("is-hidden")) return;
+  body.classList.remove("is-modal-open");
+}
+
+function showPopup(message, title = "Alert") {
+  if (!message) return;
+  const modal = document.getElementById("warningModal");
+  if (!modal) {
+    window.alert(message);
+    return;
+  }
+  const box = modal.querySelector(".modal-box");
+  const msg = modal.querySelector("#modalMessage");
+  const ttl = modal.querySelector("#modalTitle");
+  const sound = document.getElementById("alertSound");
+
+  if (ttl) ttl.textContent = title;
+  if (msg) msg.textContent = message;
+
+  if (box) {
+    box.classList.remove("closing");
+    box.classList.add("danger");
+  }
+  modal.classList.add("show");
+  setBodyModalState(true);
+
+  if (sound && typeof sound.play === "function") {
+    sound.currentTime = 0;
+    const playPromise = sound.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {});
     }
-  ];
+  }
+}
 
-  let activeIndex = 0;
+function closeModal() {
+  const modal = document.getElementById("warningModal");
+  if (!modal) return;
+  const box = modal.querySelector(".modal-box");
+  const sound = document.getElementById("alertSound");
 
-  const modal = document.createElement("div");
-  modal.className = "step-modal is-hidden";
-  modal.innerHTML = `
-    <div class="step-modal__backdrop"></div>
-    <div class="step-modal__card">
-      <div class="step-modal__header">
-        <span class="step-modal__step"></span>
-        <button class="step-modal__close" type="button" aria-label="Close">&times;</button>
-      </div>
-      <div class="step-modal__body">
-        <p class="step-modal__title"></p>
-        <p class="step-modal__copy"></p>
-      </div>
-      <button class="step-modal__cta" type="button">Got it</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  const stepLabel = modal.querySelector(".step-modal__step");
-  const titleEl = modal.querySelector(".step-modal__title");
-  const copyEl = modal.querySelector(".step-modal__copy");
-  const closeBtn = modal.querySelector(".step-modal__close");
-  const ctaBtn = modal.querySelector(".step-modal__cta");
-  const backdrop = modal.querySelector(".step-modal__backdrop");
-
-  function hide() {
-    modal.classList.add("is-hidden");
+  if (box) {
+    box.classList.add("closing");
   }
 
-  function renderStep(step, index) {
-    if (!step) return;
-    const totalPlayable = steps.length - 1; // last step is the completion note
-    const stepNumber = step.id === "done" ? "Complete" : `Step ${index + 1} of ${totalPlayable}`;
-    stepLabel.textContent = stepNumber;
-    titleEl.textContent = step.title;
-    copyEl.textContent = step.copy;
+  setTimeout(() => {
+    modal.classList.remove("show");
+    if (box) {
+      box.classList.remove("closing");
+    }
+    setBodyModalState(false);
+  }, 500);
+
+  if (sound && typeof sound.pause === "function") {
+    sound.pause();
   }
+}
 
-  function showCurrent() {
-    const step = steps[activeIndex];
-    if (!step) return;
-    renderStep(step, activeIndex);
-    modal.classList.remove("is-hidden");
-  }
+function isModalOpen() {
+  const modal = document.getElementById("warningModal");
+  return !!(modal && modal.classList.contains("show"));
+}
 
-  function complete(stepId) {
-    const expected = steps[activeIndex];
-    if (!expected || expected.id !== stepId) return;
-    activeIndex = Math.min(activeIndex + 1, steps.length - 1);
-    showCurrent();
-  }
+window.closeModal = closeModal;
+window.showPopup = showPopup;
 
-  function reset() {
-    activeIndex = 0;
-    showCurrent();
-  }
+(function initWarningModal() {
+  const modal = document.getElementById("warningModal");
+  if (!modal) return;
+  const closeBtn = modal.querySelector("[data-modal-close]");
 
-  closeBtn?.addEventListener("click", hide);
-  ctaBtn?.addEventListener("click", hide);
-  backdrop?.addEventListener("click", hide);
-
-  // Show the first prompt when the page is ready
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    showCurrent();
-  } else {
-    document.addEventListener("DOMContentLoaded", showCurrent, { once: true });
-  }
-
-  return { complete, reset, showCurrent, hide };
+  closeBtn?.addEventListener("click", closeModal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isModalOpen()) {
+      closeModal();
+    }
+  });
 })();
 
 (function initComponentIntro() {
@@ -754,7 +744,7 @@ function setupJsPlumb() {
       updateControlLocks();
       window.dispatchEvent(new CustomEvent(MCB_TURNED_OFF_EVENT));
       if (!silent) {
-        alert("You turned off the MCB. Turn it back on to continue the experiment.");
+        showPopup("You turned off the MCB. Turn it back on to continue the experiment.");
       }
       return;
     }
@@ -771,7 +761,7 @@ function setupJsPlumb() {
   if (mcbTargets.length) {
     const handleMcbClick = function () {
       if (!connectionsVerified) {
-        alert("Make and check the connections before turning on the MCB.");
+        showPopup("Make and check the connections before turning on the MCB.");
         return;
       }
       const nextState = !mcbOn;
@@ -843,7 +833,7 @@ function setupJsPlumb() {
     if (guideSpeechActive()) {
       speakLocal(text, { interruptFirst: true });
     } else {
-      alert(text);
+      showPopup(text);
     }
   }
 
@@ -907,7 +897,7 @@ function setupJsPlumb() {
       if (guideSpeechActive()) {
         speakLocal(speechMessage, { interruptFirst: true });
       } else {
-        alert(message);
+        showPopup(message);
       }
       setMcbState(false, { silent: true });
       connectionsVerified = false;
@@ -1478,7 +1468,7 @@ function voltageToAngle(voltageValue) {
   function speakOrAlert(text) {
     if (!text) return;
     if (speechIsActive()) speak(text);
-    else alert(text);
+    else showPopup(text);
   }
 
   function updateGraphControls() {
@@ -1619,7 +1609,7 @@ function voltageToAngle(voltageValue) {
         );
       })
       .catch(() => {
-        alert("Unable to load graphing library. Please check your connection and try again.");
+        showPopup("Unable to load graphing library. Please check your connection and try again.", "Graph Error");
       });
   }
 
@@ -2201,21 +2191,21 @@ tr:nth-child(even) { background-color: #f8fbff; }
         selector: ".observation-section, #observationTable, #observationBody",
         text: "Observation Table: Stores recorded readings of load current and terminal voltage for plotting and the report."
       },
-      {
-        id: "output-graph",
-        selector: ".graph-section, #graphPlot, #graphBars",
-        text: "Output Graph: Plots terminal voltage (V) versus load current (A) using the readings you add to the table."
-      },
-      {
-        id: "instructions",
-        selector: ".instructions-wrapper, .instructions-btn, .instructions-panel, #instructionModal",
-        text: "Instructions: Shows the required wiring sequence and the steps to run the experiment."
-      },
-      {
-        id: "controls",
-        selector: "#pill-stack",
-        text: "Controls: Use these buttons to run the simulation (Speaking, Check, Auto Connect, Add To Table, Reset)."
-      }
+      // {
+      //   id: "output-graph",
+      //   selector: ".graph-section, #graphPlot, #graphBars",
+      //   text: "Output Graph: Plots terminal voltage (V) versus load current (A) using the readings you add to the table."
+      // },
+      // {
+      //   id: "instructions",
+      //   selector: ".instructions-wrapper, .instructions-btn, .instructions-panel, #instructionModal",
+      //   text: "Instructions: Shows the required wiring sequence and the steps to run the experiment."
+      // },
+      // {
+      //   id: "controls",
+      //   selector: "#pill-stack",
+      //   text: "Controls: Use these buttons to run the simulation (Speaking, Check, Auto Connect, Add To Table, Reset)."
+      // }
     ];
 
     tooltips.forEach(({ selector }) => {
