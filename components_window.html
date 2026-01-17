@@ -543,7 +543,7 @@
                 image: "images/Components/mcb-on.png",
                 description:
                     "An MCB (Miniature Circuit Breaker) is an automatically operated electrical switching device used to protect a circuit from overcurrent, short circuit, or excessive load. It disconnects the circuit when abnormal conditions occur.",
-                audio: ""
+                audio: "mcb.wav"
             },
             {
                 key: "starter",
@@ -701,11 +701,11 @@
             }
 
             if (hasFile) {
-                setAudioStatus("Audio ready");
+                setAudioStatus("");
             } else if (speechSupported) {
                 setAudioStatus("Voice narration");
             } else {
-                setAudioStatus("Audio not available");
+                setAudioStatus(" ");
             }
         }
 
