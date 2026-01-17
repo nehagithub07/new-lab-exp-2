@@ -115,13 +115,13 @@
  #pointR {
    position: absolute;
    left: 45px;
-   top: 162px;
+   top: 167px;
  }
 
  #pointB {
    position: absolute;
    left: 80px;
-   top: 162px;
+   top: 167px;
  }
 
  #pointL {
@@ -240,7 +240,7 @@ left:205px;
 
 #pointL2 {
    position: absolute;
-  left:195px;
+  left:210px;
 top: 280px;
 }
 
@@ -440,7 +440,7 @@ left: 57px;
    position: absolute;
    width: 24px;
    height: 24px;
-   left:  180px;
+   left:  195px;
  top: 290px;
 
 }

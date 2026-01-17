@@ -219,6 +219,22 @@
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 18px rgba(60, 54, 46, 0.12);
             transition: transform var(--dur-fast) var(--ease-in), opacity var(--dur-fast) var(--ease-in), background var(--dur-fast) var(--ease-in), border-color var(--dur-fast) var(--ease-in), box-shadow var(--dur-fast) var(--ease-in);
         }
+        .component-audio {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .audio-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .audio-status {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b5e4e;
+        }
         .component-card.is-fading-out .component-title,
         .component-card.is-fading-out .component-definition {
             opacity: 0;
@@ -495,6 +511,12 @@
                 <div class="component-content">
                     <h1 class="component-title" id="componentTitle"></h1>
                     <p class="component-definition" id="componentDefinition"></p>
+                    <div class="component-audio">
+                        <button class="control-btn audio-btn" id="toggleAudio" type="button" aria-pressed="false">
+                            <span data-audio-label>Play Audio</span>
+                        </button>
+                        <span class="audio-status" id="audioStatus" aria-live="polite"></span>
+                    </div>
                 </div>
             </div>
 
@@ -505,6 +527,8 @@
             </div>
         </main>
     </div>
+
+    <audio id="componentAudio" preload="metadata"></audio>
 
     <script>
         const params = new URLSearchParams(window.location.search);
@@ -518,28 +542,32 @@
                 name: "MCB",
                 image: "images/Components/mcb-on.png",
                 description:
-                    "An MCB (Miniature Circuit Breaker) is an automatically operated electrical switching device used to protect a circuit from overcurrent, short circuit, or excessive load. It disconnects the circuit when abnormal conditions occur."
+                    "An MCB (Miniature Circuit Breaker) is an automatically operated electrical switching device used to protect a circuit from overcurrent, short circuit, or excessive load. It disconnects the circuit when abnormal conditions occur.",
+                audio: ""
             },
             {
                 key: "starter",
                 name: "3-Point Starter",
                 image: "images/Components/Starter.png",
                 description:
-                    "A 3-point starter safely starts DC shunt and compound motors. It limits starting current, provides overload protection, and ensures smooth acceleration by gradually reducing resistance."
+                    "A 3-point starter safely starts DC shunt and compound motors. It limits starting current, provides overload protection, and ensures smooth acceleration by gradually reducing resistance.",
+                audio: ""
             },
             {
                 key: "shuntmotor",
                 name: "DC Shunt Motor",
                 image: "images/Components/shuntmotor.png",
                 description:
-                    "In this experiment, the DC motor acts as a prime mover, converting electrical energy into mechanical energy. Its shaft is mechanically coupled to the DC shunt generator, and it receives the supply through the MCB and starter."
+                    "In this experiment, the DC motor acts as a prime mover, converting electrical energy into mechanical energy. Its shaft is mechanically coupled to the DC shunt generator, and it receives the supply through the MCB and starter.",
+                audio: ""
             },
             {
                 key: "generator",
                 name: "DC Shunt Generator",
                 image: "images/Components/DC-Shunt-Generator.png",
                 description:
-                    "The DC shunt generator converts the mechanical energy received from the motor into electrical energy, producing DC output voltage and current. Its terminals are connected to an ammeter in series and a voltmeter in parallel for measurement."
+                    "The DC shunt generator converts the mechanical energy received from the motor into electrical energy, producing DC output voltage and current. Its terminals are connected to an ammeter in series and a voltmeter in parallel for measurement.",
+                audio: ""
             },
             
             {
@@ -547,7 +575,8 @@
                 name: "Lamp Load",
                 image: "images/Components/LampBoard.png",
                 description:
-                    "A lamp load is used as a variable resistive load to study the load characteristics of a DC shunt generator. It helps observe how the terminal voltage varies with the load current."
+                    "A lamp load is used as a variable resistive load to study the load characteristics of a DC shunt generator. It helps observe how the terminal voltage varies with the load current.",
+                audio: ""
             },
             
             {
@@ -555,14 +584,16 @@
                 name: "Ammeter",
                 image: "images/Components/ammeter.png",
                 description:
-                    "This ammeter is connected in series with the DC motor. Its purpose is to measure the current drawn by the DC motor while it is operating."
+                    "This ammeter is connected in series with the DC motor. Its purpose is to measure the current drawn by the DC motor while it is operating.",
+                audio: ""
             },
             {
                 key: "voltmeter",
                 name: "Voltmeter",
                 image: "images/Components/voltmeter.png",
                 description:
-                    "It is connected in parallel across the MCB. The purpose of this voltmeter is to measure the voltage of the main supply."
+                    "It is connected in parallel across the MCB. The purpose of this voltmeter is to measure the voltage of the main supply.",
+                audio: ""
             },
             
            
@@ -577,9 +608,18 @@
         const indexEl = document.getElementById("componentIndex");
         const prevBtn = document.getElementById("prevComponent");
         const nextBtn = document.getElementById("nextComponent");
+        const audioBtn = document.getElementById("toggleAudio");
+        const audioLabelEl = audioBtn?.querySelector("[data-audio-label]");
+        const audioStatusEl = document.getElementById("audioStatus");
+        const audioEl = document.getElementById("componentAudio");
+        const speechSupported =
+            "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
 
         let currentIndex = 0;
         let swapTimer = null;
+        let audioMode = "tts";
+        let ttsState = "idle";
+        let activeComponent = components[0];
 
         function buildThumbs() {
             thumbsEl.innerHTML = "";
@@ -616,11 +656,65 @@
             });
         }
 
+        function setAudioStatus(message) {
+            if (!audioStatusEl) return;
+            audioStatusEl.textContent = message || "";
+            audioStatusEl.hidden = !message;
+        }
+
+        function updateAudioButton(isPlaying) {
+            if (!audioBtn) return;
+            audioBtn.setAttribute("aria-pressed", isPlaying ? "true" : "false");
+            if (audioLabelEl) {
+                audioLabelEl.textContent = isPlaying ? "Pause Audio" : "Play Audio";
+            }
+        }
+
+        function stopAudio() {
+            if (audioEl) {
+                audioEl.pause();
+                audioEl.currentTime = 0;
+            }
+            if (speechSupported) {
+                window.speechSynthesis.cancel();
+            }
+            ttsState = "idle";
+            updateAudioButton(false);
+        }
+
+        function prepareAudio(component) {
+            activeComponent = component;
+            stopAudio();
+
+            const hasFile = Boolean(component.audio);
+            audioMode = hasFile ? "file" : "tts";
+
+            if (audioEl) {
+                audioEl.src = hasFile ? component.audio : "";
+                if (hasFile) {
+                    audioEl.load();
+                }
+            }
+
+            if (audioBtn) {
+                audioBtn.disabled = !hasFile && !speechSupported;
+            }
+
+            if (hasFile) {
+                setAudioStatus("Audio ready");
+            } else if (speechSupported) {
+                setAudioStatus("Voice narration");
+            } else {
+                setAudioStatus("Audio not available");
+            }
+        }
+
         function applyComponent(component) {
             imageEl.src = component.image;
             imageEl.alt = component.name;
             titleEl.textContent = component.name;
             definitionEl.textContent = component.description;
+            prepareAudio(component);
         }
 
         function restartCardAnimation() {
@@ -658,6 +752,70 @@
 
         prevBtn.addEventListener("click", () => setActive(currentIndex - 1));
         nextBtn.addEventListener("click", () => setActive(currentIndex + 1));
+
+        if (audioEl) {
+            audioEl.addEventListener("ended", () => updateAudioButton(false));
+            audioEl.addEventListener("pause", () => {
+                if (audioEl.currentTime === 0 || audioEl.ended) return;
+                updateAudioButton(false);
+            });
+            audioEl.addEventListener("error", () => {
+                if (audioMode === "file" && speechSupported) {
+                    audioMode = "tts";
+                    setAudioStatus("Voice narration");
+                } else {
+                    setAudioStatus("Audio not available");
+                    if (audioBtn) audioBtn.disabled = true;
+                }
+                updateAudioButton(false);
+            });
+        }
+
+        if (audioBtn) {
+            audioBtn.addEventListener("click", () => {
+                if (audioMode === "file") {
+                    if (!audioEl) return;
+                    if (audioEl.paused) {
+                        audioEl.play().catch(() => {});
+                        updateAudioButton(true);
+                    } else {
+                        audioEl.pause();
+                        updateAudioButton(false);
+                    }
+                    return;
+                }
+
+                if (!speechSupported) return;
+
+                if (ttsState === "playing") {
+                    window.speechSynthesis.pause();
+                    ttsState = "paused";
+                    updateAudioButton(false);
+                    return;
+                }
+
+                if (ttsState === "paused") {
+                    window.speechSynthesis.resume();
+                    ttsState = "playing";
+                    updateAudioButton(true);
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(activeComponent.description);
+                ttsState = "playing";
+                utterance.onend = () => {
+                    ttsState = "idle";
+                    updateAudioButton(false);
+                };
+                utterance.onerror = () => {
+                    ttsState = "idle";
+                    updateAudioButton(false);
+                };
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+                updateAudioButton(true);
+            });
+        }
 
         buildThumbs();
         setActive(0, { immediate: true });
